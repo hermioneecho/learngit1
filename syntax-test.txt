@@ -1,0 +1,101 @@
+
+
+/* test for declaration */
+int a;
+real *b;
+int c[6];
+
+/* test for definition */
+int hello = -1;
+real world = 4.2;
+int array[3] = {1,2,3};
+int *pointer = &hello;
+
+
+/* test for function definition */
+real add(real r, int i)
+{
+return r+i;
+}
+
+/* test for statements in main function */
+int main()
+{
+// arithmetic expression
+hello = 1 + 2 * (2 + 1);
+world = *poiter * *pointer + add(world, hello)/array[3];
+array[2] = *pointer;
+*pointer = array[1];
+
+
+1+2;
+
+//Read and write statement
+read(hello);
+write(world);
+write("hello world");
+
+//if else
+if(1 < hello)
+{
+write("1 < hello");
+}
+else
+{
+write("1 not < hello");
+}
+
+if(2 < hello)
+write("2 < hello");
+else
+write("2 not < hello");
+
+if(3 < hello)
+{
+write("3 < hello");
+}
+else
+write("3 not < hello");
+
+
+if(4 < hello)
+write("4 < hello");
+else
+{
+write("4 not < hello");
+}
+if(6 < hello)
+;
+
+//while statement
+while(5 <> hello)
+{
+hello = 5;
+}
+
+while(6==hello)
+hello = 5;
+
+
+//nested statement
+int i = 0;
+while(1 < i)
+{
+    if(1 <> hello)
+    {
+        i = -1;
+        while(i < 10)
+        {   
+            i = i + 1;
+            write(i);
+         }
+    }
+    else
+        if(i == 10)
+            i = -1;
+hello = random();
+}
+
+
+return 1;
+}
