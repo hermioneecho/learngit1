@@ -15,8 +15,10 @@ int *pointer = &hello;
 /* test for function definition */
 real add(real r, int i)
 {
+int f =0;
 return r+i;
 }
+
 
 /* test for statements in main function */
 int main()
@@ -28,7 +30,7 @@ array[2] = *pointer;
 *pointer = array[1];
 
 
-1+2;
+//1+2;
 
 //Read and write statement
 read(hello);
@@ -64,8 +66,10 @@ else
 {
 write("4 not < hello");
 }
-if(6 < hello)
-;
+
+//the empty statement is banned
+//if(6 < hello)
+//;
 
 //while statement
 while(5 <> hello)
@@ -78,6 +82,7 @@ hello = 5;
 
 
 //nested statement
+
 int i = 0;
 while(1 < i)
 {
@@ -95,7 +100,6 @@ while(1 < i)
             i = -1;
 hello = random();
 }
-
 
 return 1;
 }

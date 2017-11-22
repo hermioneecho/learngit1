@@ -17,43 +17,7 @@ public class Interpreter extends Info{
 	static private Lexer lexer;
 	static private Syntaxer syntaxer;
 	
-	/*
-	 *  version 3.1
-	 *  adding the debug information
-	 *  writting the test use case
-	 */
-	
-	/*
-	 *  version 3
-	 *  give up automatic variable solution
-	 *  give up cloneable server
-	 *  decide to create two new classes : SyntaxerReader, Syntaxer
-	 *  Syntaxer : the syntax detection and syntax-directed translation
-	 *  SyntaxerReader : a rollbackable token collector
-	 */
-	
-	
-	// version 2
-	// the previous backup plan but now I move it to Lexer class
-	// now I use a local automatic variable as a save-point
-	
-//	static private Queue<Token> tokensBuf;
-//	private Token getNextToken()
-//	{
-//		if(!tokensBuf.isEmpty())
-//			return tokensBuf.poll();
-//		if(lexer.hasNext())
-//			return lexer.next();
-//		else
-//			return null;
-//	}
-//	private void putBackToken(Token tk)
-//	{
-//		tokensBuf.add(tk);
-//	}
-	
-	
-	
+
 	public static void main ( String args [ ] ) {
 		DFA[] dfas = {literalDFA, identifierDFA};
 		try {
@@ -66,7 +30,6 @@ public class Interpreter extends Info{
 					inputsb.append(buf + '\n');
 				lexer = new Lexer(false, inputsb.toString(), dfas, reservedWords);
 				syntaxer = new Syntaxer(lexer);
-				//System.out.println(syntaxer.check());
 				if(syntaxer.check())
 				{
 				Demo result = new Demo(syntaxer.getRoot());
@@ -99,24 +62,11 @@ public class Interpreter extends Info{
 				}
 
 		    }
-//			System.out.println("begin test:");
-//			Token tmp;
-//			while(lexer.hasNext())
-//			{
-//				tmp = lexer.next();
-//			    System.out.println(tmp.getWord() + "(index:"+ tmp.getKind() + ", Token Type: " + getTokenName(tmp.getKind())+" ) ");
-//			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// let's begin our syntax check
-		// I use a mixture of LL and LR （准确的说是递归子程序法+LALR（1）
-		// LL in a macro level
-		// LR in a lower level
-		// give up OO style, because I think it is better to be in procedure oriented
-		
-		
+
 	}
 
 }

@@ -40,7 +40,7 @@ public class Syntaxer extends Info{
 	 *  I should not provide the functions that do roll back
 	 */
 	
-	/*
+	/**
 	 * added in developing version 3
 	 * is the next token's word equals parameter word
 	 * if false, it would roll back automatically
@@ -54,7 +54,7 @@ public class Syntaxer extends Info{
 		return false;
 	}
 	
-	/*
+	/**
 	 * added in developing version 3
 	 * is the next token's kind equals parameter kind
 	 * if false, it would roll back automatically
@@ -69,23 +69,23 @@ public class Syntaxer extends Info{
 	}
 	
 	
-	// the main frame is built by recursive subprocedure method
 	private SNode program()
 	{
 		SNode result = new SNode("program",null,stxr.getLine());
 		SNode tmp = null;
 		while(stxr.hasNext())
 		{			
-//			if(isKind("new_line"))
-//			{
-//				System.out.println("a new line!");
-//				continue;
-//			}
+			// if the the next following tokens are FunctionDefinition or VariableDefinitionorDeclaration
 		    if((tmp=FDf())!=null||(tmp=VDD())!=null)
 		    {
 		    	result.add(tmp);
 		    	continue;
 		   	}
+		    //if it is the end of the program
+		    else if(stxr.next()==null)
+		    {
+		    	continue;
+		    }
 		    return null;
 		}
 		
@@ -124,13 +124,13 @@ public class Syntaxer extends Info{
 					while((statement=Statement())!=null)
 					{
 						//syntax direct
-						result.add(statement);
-						
+						result.add(statement);						
 					}
 					if((rtn=Return())!=null && isWord("}"))
 					{
 						//syntax direct
 						System.out.println("FDf");
+						result.add(rtn);
 						return result;
 					}
 				}
@@ -140,10 +140,6 @@ public class Syntaxer extends Info{
 		stxr.setCur(save);
 		return null;
 	}
-	
-	//////////////////////////////////////
-	///////////STOP HERE//////////////////
-	//////////////////////////////////////
 
 	private SNode Return() {
 		// TODO Auto-generated method stub
@@ -151,10 +147,10 @@ public class Syntaxer extends Info{
 		
 		SNode rv = null;
 		SNode result = null;
-		if(isWord("return") && (rv=Expression())!=null && isWord(";"))
+		if(isWord("return") && (rv=RightValue())!=null && isWord(";"))
 		{
 			// syntax direct
-			result = new SNode("return",null,stxr.getLine());
+			result = new SNode("return_node",null,stxr.getLine());
 			result.add(rv);
 			System.out.println("Return");
 			return result;
@@ -167,16 +163,11 @@ public class Syntaxer extends Info{
 	private SNode Statement() {
 		// TODO Auto-generated method stub
 		
-//		int save = stxr.getCur();
-		// we don't need save-point because if false they will backup automatically
-		// the code generation is concerned in FDf()
-		// but for the sake of further bugs, int save is better used
-		
 		int save = stxr.getCur();
 		
 		SNode result = null;
 		
-		if((result=VDD())!=null|(result=RW())!=null|(result=IfStatement())!=null|(result=WhileStatement())!=null|((result=Expression())!=null && isWord(";"))/*||isWord(";")*/)
+		if((result=VDD())!=null||(result=RW())!=null||(result=IfStatement())!=null||(result=WhileStatement())!=null||((result=RightValue())!=null && isWord(";"))/*||isWord(";")*/)
 		{
 			System.out.println("statement");
 			return result;
@@ -196,7 +187,7 @@ public class Syntaxer extends Info{
 		if(isWord("while") && (cond=Cond())!=null && (body=Body())!=null)
 		{
 			// syntax direct
-			result = new SNode("while",null,line);
+			result = new SNode("while_node",null,line);
 			result.add(cond);
 			result.add(body);
 			System.out.println("WhileStatement");
@@ -271,7 +262,7 @@ public class Syntaxer extends Info{
 		
 		SNode result = null; 
 		
-		if((r=Expression())!=null)
+		if((r=RightValue())!=null)
 		{
 			tmp = stxr.next();
 			if(tmp!=null)
@@ -305,7 +296,7 @@ public class Syntaxer extends Info{
 					stxr.setCur(save);
 					return null;
 				}
-				if((l=Expression())!=null)
+				if((l=RightValue())!=null)
 				{
 					// syntax direct
 					System.out.println("boolean expression");
@@ -340,7 +331,7 @@ public class Syntaxer extends Info{
 		{
 			if(isWord("else") && (elsebody=Body())!=null)
 			{
-				result = new SNode("if_else",null,line);
+				result = new SNode("if_else_node",null,line);
 				result.add(cond);
 				result.add(ifbody);
 				result.add(elsebody);
@@ -349,7 +340,7 @@ public class Syntaxer extends Info{
 			}
 			else
 			{
-				result = new SNode("if",null,line);
+				result = new SNode("if_node",null,line);
 				result.add(cond);
 				result.add(ifbody);
 				System.out.println("if statement block");
@@ -381,7 +372,7 @@ public class Syntaxer extends Info{
 					{
 						// syntax direct
 						id = mkid(tmp);
-						result = new SNode("read",null,stxr.getLine());
+						result = new SNode("read", id, stxr.getLine());
 						result.add(id);
 						System.out.println("RW:read");
 						return result;
@@ -399,13 +390,14 @@ public class Syntaxer extends Info{
 					if(is(tmp,"identifier"))
 					{
 						id = mkid(tmp);
-						result = new SNode("write",null,stxr.getLine());
+						result = new SNode("write",id,stxr.getLine());
 						result.add(id);
 					}
 					// write a string ---> a string make it much harder ---> we need to store the string in somewhere
 					else if(is(tmp,"string_literal"))
 					{
-						result = new SNode("write",tmp.getWord(),stxr.getLine());
+						result = new SNode("write_string", null ,stxr.getLine());
+						result.add(new SNode("string_literal",tmp.getWord(),stxr.getLine()));
 					}
 					else
 					{
@@ -429,13 +421,13 @@ public class Syntaxer extends Info{
 	{
 		int save = stxr.getCur();
 		// is assignment?
-		SNode declarator = null;
+		SNode leftvalue = null;
 		SNode rightValue = null;
 		SNode result = null;
-		if((declarator = Declarator())!=null && isWord("=") && (rightValue=Expression())!=null)
+		if((leftvalue = LeftValue())!=null && isWord("=") && (rightValue=RightValue())!=null)
 		{
 			result = new SNode("assigment",null,stxr.getLine());
-			result.add(declarator);
+			result.add(leftvalue);
 			result.add(rightValue);
 			return result;
 		}
@@ -497,7 +489,7 @@ public class Syntaxer extends Info{
 		int save = stxr.getCur();
 		SNode result = null;
 		// ()?
-		if(isWord("(") && (result=Expression())!=null && isWord(")"))
+		if(isWord("(") && (result=RightValue())!=null && isWord(")"))
 		{
 			// syntax direct
 			System.out.println("Expression unit: ()");
@@ -526,7 +518,7 @@ public class Syntaxer extends Info{
 			return result;
 		}
 		
-		if((result = Declarator())!=null)
+		if((result = LeftValue())!=null)
 		{
 			System.out.println("Expression unit: by identifier");
 			return result;			
@@ -544,6 +536,11 @@ public class Syntaxer extends Info{
 		return null;
 	}
 	
+	private SNode RightValue()
+	{
+		return Expression();
+	}
+	
 	private SNode Expression()
 	{
 		int save = stxr.getCur();
@@ -555,9 +552,15 @@ public class Syntaxer extends Info{
 		return null;
 	}
 
+	
+	/**
+	 * @param t token
+	 * @return a SNode that is tagged by identifier and has contains the name
+	 * @ built for convenience
+	 */
 	private SNode mkid(Token t)
 	{
-		return new SNode("identifier", t.getWord(), stxr.getLine());
+		return new SNode("identifier", t, stxr.getLine());
 	}
 
 	private SNode PL() {
@@ -572,7 +575,6 @@ public class Syntaxer extends Info{
 		SNode dt;
 		SNode identifier;
 		
-		// is (int i, real r)
 		if(isWord("("))
 		{			
 			if((dt=DT())!=null && (tmp=stxr.next())!=null && is(tmp,"identifier"))
@@ -614,7 +616,7 @@ public class Syntaxer extends Info{
 
 	private SNode VDD() {
 		// TODO Auto-generated method stub
-		//
+
 		// Variable Declaration & Definition
 		// the result of declaration and definition is similar : initiate a variable with or without specific value
 		
@@ -627,7 +629,7 @@ public class Syntaxer extends Info{
 		SNode definition = null;
 		SNode declaration = null;
 		
-			if((dt=DT())!=null && (declarator=Declarator())!=null) {
+			if((dt=DT())!=null && (declarator=LeftValue())!=null) {
 				
 				// is it definition or declaration?
 				
@@ -653,7 +655,7 @@ public class Syntaxer extends Info{
         			definition.add(declarator);
 	    			// is rightValue?
 	    			int save2 = stxr.getCur();
-	        		if((expression = Expression())!=null && isWord(";"))
+	        		if((expression = RightValue())!=null && isWord(";"))
 	        		{
 	        			// syntax direct
 	        			definition = new SNode("definition", null, stxr.getLine());
@@ -669,65 +671,12 @@ public class Syntaxer extends Info{
 	        			System.out.println("VDD - defined by array literal");
 	        			return definition;
 	        		}	
-	        		
-//	        		// the following should be viewed as expresion_unit
-//                  // so it is erased
-//	        		stxr.setCur(save2);
-//	        		Token tmp;
-//	        		
-//	        		if(isWord("&") && (tmp=stxr.next())!=null && is(tmp,"identifier") && isWord(";"))
-//	        		{
-//	        			//syntax direct
-//	        			System.out.println("VDD : defined by address");
-//	        			return true;
-//	        		}
 	    		}
 			}
 	    	stxr.setCur(save);
 			return null;
 	}
 	
-/**
- * the next function is necessary in the future 
- * but not now so I erase it just like left value becomes declarator
- * @return
- */
-	
-//    private Object RightValue() {
-//		// TODO Auto-generated method stub
-//    	
-//    	int save = stxr.getCur();
-//    	    	
-////    	// is *identifier[6]?
-////    	boolean pointer = isWord("*");
-////    	String id = null;
-////    	int offset = 0;   	
-////    	
-////    	tmpsave = stxr.getCur();
-////    	if(pointer && (tmp=stxr.next())!=null && is(tmp,"identifier"))
-////    	{
-////    		id = tmp.getWord();
-////    		if(isWord("[") && (tmp = stxr.next())!= null && is(tmp, "integer_literal") && isWord("]"))
-////    		{
-////    			offset = Integer.parseInt(tmp.getWord());
-////    		}
-////    		//syntax direct
-////    		System.out.println("right value - by dereference");
-////    		return true;
-////    	}   	
-////    	stxr.setCur(tmpsave);
-//    	
-//    	// is Expression?
-//    	if(Expression())
-//    	{
-//    		//syntax direct
-//    		System.out.println("right value - by expression");
-//    		return true;
-//    	}
-//    	
-//    	stxr.setCur(save);
-//		return null;
-//	}
 
 	private SNode FunctionCall() {
 		// TODO Auto-generated method stub
@@ -742,7 +691,7 @@ public class Syntaxer extends Info{
 		if(tmp!=null && is(tmp, "identifier") && (al=ArgumentList())!=null)
 		{
 			//syntax direct
-			identifier = new SNode("identifier",tmp.getWord(),stxr.getLine());
+			identifier = mkid(tmp);
 			functioncall = new SNode("function_call",null,stxr.getLine());
 			functioncall.add(identifier);
 			functioncall.add(al);
@@ -763,10 +712,10 @@ public class Syntaxer extends Info{
 		Token tmp;
 		SNode argumentlist = new SNode("argument_list",null,stxr.getLine());
 		
-		if(isWord("(") && (argument=Expression())!=null)
+		if(isWord("(") && (argument=RightValue())!=null)
 		{
 			argumentlist.add(argument);
-			while(isWord(",") && (argument=Expression())!=null)
+			while(isWord(",") && (argument=RightValue())!=null)
 			{
 				argumentlist.add(argument);
 			}
@@ -793,7 +742,7 @@ public class Syntaxer extends Info{
 		int save = stxr.getCur();
 		SNode real = null;
 		SNode integer = null;
-		SNode result = new SNode("array_literal", null, stxr.getLine());
+		SNode result = new SNode("array_literal_node", null, stxr.getLine());
 		if(isWord("{"))
 		{
 			if((integer=Integer_Literal()) != null)
@@ -841,7 +790,7 @@ public class Syntaxer extends Info{
 		return null;
 	}
 
-	private SNode Declarator() {
+	private SNode LeftValue() {
 		// TODO Auto-generated method stub
 		int save = stxr.getCur();
 		
@@ -886,10 +835,10 @@ public class Syntaxer extends Info{
 		result.add(ID);
 		result.add(arraysize);
 		if(pointer)
-		    System.out.println("Declarator - *");
+		    System.out.println("left_value - *");
 		if(arraysize != 0)
-			System.out.println("Declarator - ["+arraysize+"]");
-		return new SNode("declarator", result, stxr.getLine());
+			System.out.println("left_value - ["+arraysize+"]");
+		return new SNode("left_value", result, stxr.getLine());
 	}
 	
     private SNode DT() {

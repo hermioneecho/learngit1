@@ -39,7 +39,10 @@ public class LexerReader {
 
 	public  LexerReader(boolean isFile, String filepath) {
 		this.isFile = isFile;
-		s = new Scanner(skipComments(filepath));
+		String skipped = skipComments(filepath);
+		if(skipped == null)
+			skipped = "";
+		s = new Scanner(skipped);
 		if(s.hasNext())
 		    buf = s.next();
 		else
@@ -123,6 +126,8 @@ public class LexerReader {
 	        	// we protect the comment only and only if begQuote < begSkip and endQuote > endSkip.
 	        	
 	        	// get begQuote and endQuote, doesn't matter if begQuote == -1 
+	        	if(wholeFile == null)
+	        		return null;
 	        	if((begQuote=wholeFile.indexOf('"', cur)) != -1)
 	        	{   
 	        		endQuote =  wholeFile.indexOf('"', begQuote+1) + 1;
@@ -186,52 +191,7 @@ public class LexerReader {
 	        	{
 	        		skipped.append(wholeFile.substring(cur,begSkip));
 	        		cur = endSkip;
-	        	}       	
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	        	
-	        	// the following is the old idea to add a substring that ends at begSkip to the result, the new idea is to add
-	        	// a substring that ends at endQuote
-	        	
-//	        	{
-//	        		begSkip = wholeFile.indexOf('/',begSkip);	        		
-//	        	    if(wholeFile.charAt(begSkip + 1) == '/')
-//	        	    {
-//	        		   if((endSkip = wholeFile.indexOf('\n')) == -1)
-//	        		   {
-//	        			   if(begSkip < endQuote) 
-//	        			   {
-//	        			       skipped.append(wholeFile.substring(0, endQuote));
-//	        			       // no match \n means it may be the last line, but we still need to take care of the rest of the code that outside of ""
-//	        			       wholeFile = wholeFile.substring(endQuote, wholeFile.length());
-//	        			       break;
-//	        			   }
-//	        			   else
-//	        			   {
-//	        				   skipped.append(wholeFile.substring(0, begSkip));
-//	        				   break;
-//	        				   //else we have comment at the end
-//	        			   }
-//	        		   }
-//	        	    }
-//	                else if(wholeFile.charAt(begSkip + 1) == '*')
-//	                {
-//	        	      if((endSkip = wholeFile.indexOf("*/")) == -1)
-//	        	    	  if(begSkip < endQuote)
-//	        	    	  {
-//	        	    		  skipped.append(wholeFile.substring(0,endQuote));
-//	        	    		  wholeFile = wholeFile.substring(endQuote, wholeFile.length());
-//	        	    	  }
-//	        	    	  else
-//	        	    	  {
-//	        	    		  System.out.println("LexerReader.SkipComments---error: missing */ at the end of the file");
-//	        	    	  }
-//	                }
-//     			   begSkip = endSkip;        	    
-//	        	}
-	        	
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	        	
-	        	
+	        	}       	        	
 	        }
 	        
 		} catch (IOException e) {
@@ -244,11 +204,11 @@ public class LexerReader {
 		return skipped.toString();
 	}
 	
+	/**
+	 * @return one word --- a word is a "string" or characters that are isolated by white space 
+	 */
 	public String next() {
-		// should return a word
-		// scan buf to see if there is character that can be delimeter
-		// if no word left, return null
-		
+
 		if(!this.hasNext())
 			return null;
 		

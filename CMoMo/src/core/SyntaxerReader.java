@@ -41,14 +41,16 @@ public class SyntaxerReader{
 	// next	
 	public Token next()
 	{
+
+		// skip the new_line
+		while(this.hasNext() && Info.is(tokens.get(cur),"new_line"))
+		{
+			line = Integer.parseInt(tokens.get(cur).getWord());
+			cur++;
+		}
+		
 		if(this.hasNext())
 		{
-			while(tokens.get(cur).getKind()==Info.getID("new_line"))
-			{
-				//System.out.println("a new line");
-				line = Integer.parseInt(tokens.get(cur).getWord());
-				cur++;
-			}
 			return tokens.get(cur++);
 		}
 		return null;

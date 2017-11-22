@@ -84,8 +84,15 @@ public class SNode extends DefaultMutableTreeNode{
 	public String toString() {
 		// TODO Auto-generated method stub
 		String result = this.getTag();
-		if(isTN())
-			result += " : " + ((Token) this.contents).getWord();
+		if(isTN()) {
+			try {
+			    result += " : " + ((Token) this.contents).getWord();
+			}
+			catch(ClassCastException e)
+			{
+				result += " : " + this.contents.toString();
+			}
+		}
 		return result;
 	}
 
