@@ -11,7 +11,6 @@ import core.Info;
  */
 public class SNode extends DefaultMutableTreeNode{
     private static final long serialVersionUID = 123232323L;
-
     // Type of the current node
     private String tag;
     // Content of the current node 

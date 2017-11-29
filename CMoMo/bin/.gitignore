@@ -1,4 +1,4 @@
-/dataStructure/
-/core/
-/main/
-/ui/
+/cvm/
+/vm/
+/bytecode/
+/backend/
