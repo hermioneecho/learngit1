@@ -77,6 +77,9 @@ public class CVM {
 		this.debugInfo = null;
 	}
 	
+	/**
+	 * just run ignoring any debug info
+	 */
 	public void normalRun()
 	{
 		Bytecode code = cpu.nextCode();
