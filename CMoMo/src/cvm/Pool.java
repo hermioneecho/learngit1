@@ -6,6 +6,7 @@ public class Pool {
 	private String[] strings;
 	private FunctionInfo[] methods;
 	private double[] floats;
+	private Object[] globalVariables;
 	
 	public Pool(String[] strings, FunctionInfo[] methods) {
 		super();
@@ -53,6 +54,16 @@ public class Pool {
 	public int getParameterCOunt(int index)
 	{
 		return methods[index].getParamCount();
+	}
+	
+	public Object getGlobalVariable(int index)
+	{
+		return globalVariables[index];
+	}
+	
+	public void setGlobalVariable(int index, Object o)
+	{
+		globalVariables[index] = o;
 	}
 
 }

@@ -340,7 +340,6 @@ public class CPU {
 				stackArea.setSp(sp);
 			}
 		});
-
 		FunctionalCircuits.set(Kinds.vload.ordinal(), (op)->
 		{
 			stackArea.push(stackArea.getValue(vars+op));
@@ -349,6 +348,22 @@ public class CPU {
 		FunctionalCircuits.set(Kinds.vstore.ordinal(), (op)->
 		{
 			stackArea.setValue(vars+op, stackArea.pop());;
+			pc++;
+		});
+		FunctionalCircuits.set(Kinds.aload.ordinal(), (op)->
+		{
+			if(op>0)
+				stackArea.push(stackArea.getValue(op));
+			else
+				stackArea.push(pool.getGlobalVariable(op));
+			pc++;
+		});
+		FunctionalCircuits.set(Kinds.astore.ordinal(), (op)->
+		{
+			if(op>0)			
+				stackArea.setValue(op, stackArea.pop());
+			else
+				pool.setGlobalVariable(op, stackArea.pop());
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.xxx.ordinal(), (op)->
