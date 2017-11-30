@@ -11,51 +11,12 @@ import core.Info;
  */
 public class SNode extends DefaultMutableTreeNode{
     private static final long serialVersionUID = 123232323L;
-
     // Type of the current node
     private String tag;
     // Content of the current node 
     private Object contents;
     // Line number of the current node
     private int lineNum;
-
-    //tag list
-    public static final String Program="program";
-    public static final String Function_definition="function_definition";
-    public static final String Returen_node="return_node";
-    public static final String While_node="while_node";
-    public static final String Body="body";
-    public static final String Cond="cond";
-    public static final String If_else_node="if_else_node";
-    public static final String If_node="if_node";
-    public static final String Read="read";
-    public static final String Write="write";
-    public static final String Write_string="write_string";
-    public static final String String_literal="string_literal";
-    public static final String Assignment="assignment";
-    public static final String Add="add";
-    public static final String Sub="sub";
-    public static final String Mul="mul";
-    public static final String Div="div";
-    public static final String Address_of_identifier="address_of_identifier";
-    public static final String Identifier="identifier";
-    public static final String Parameter_list="parament_list";
-    public static final String Parameter="parameter";
-    public static final String Declaration="declaration";
-    public static final String Definition="definition";
-    public static final String Function_call="function_call";
-    public static final String Argument_list="argument_list";
-    public static final String Array_literal_node="array_literal_node";
-    public static final String Left_value="left_value";
-    public static final String DT="DT";
-    public static final String Integer_literal="integer_literal";
-    public static final String Real_integer="real_integer";
-    public static final String GT="<";
-    public static final String LT=">";
-    public static final String GET=">=";
-    public static final String LET="<=";
-    public static final String EQ="==";
-    public static final String NEQ="<>";
     
     public boolean isTN()
     {

@@ -127,7 +127,6 @@ public class FourCodeGenerator {
 	}
 	
 	public void ifStatement(SNode node)throws Exception{
-		if(node.getTag()==SNode.If_node) {
 			int i=0;     //the subscript of the child node
 			FourCode if_jmp=new FourCode(FourCode.JUMP,expression(node.getChildAt(i)),null,null,lineNo);
 			i++;
@@ -140,11 +139,9 @@ public class FourCodeGenerator {
 			codes.add(new FourCode(FourCode.OUT,null,null,null,lineNo));
 			lineNo++;
 			if_jmp.setResult(String.valueOf(lineNo)+1);
-		}
 	}
 	
 	public void ifElseStatement(SNode node)throws Exception{
-		if(node.getTag()==SNode.If_else_node) {
 			int i=0;   
 			FourCode if_jmp=new FourCode(FourCode.JUMP,expression(node.getChildAt(i)),null,null,getLineNo());
 			i++;
@@ -161,7 +158,6 @@ public class FourCodeGenerator {
             i++;
             codes.add(new FourCode(FourCode.OUT, null, null, null,getLineNo()));
             else_jmp.setResult(String.valueOf(lineNo + 1));
-		}
 	}
 	
 	public void whileStatement(SNode node)throws Exception{

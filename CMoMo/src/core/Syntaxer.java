@@ -54,18 +54,33 @@ public class Syntaxer extends Info{
 		return false;
 	}
 	
-	/**
-	 * added in developing version 3
-	 * is the next token's kind equals parameter kind
-	 * if false, it would roll back automatically
-	 */
-	private boolean isKind(String kind)
+	private SNode xxx()
 	{
-		Token tmp = stxr.next();
-		if(tmp!=null && is(tmp,kind))
-			return true;
-		stxr.back();
-		return false;
+		int save = stxr.getCur();
+		
+		if(isWord("xxx"))
+		{
+			SNode result = new SNode("xxx",null,stxr.getLine());
+			SNode integer = Integer_Literal();
+			if(integer!=null && isWord(","))
+			{
+				result.add(integer);
+				integer = Integer_Literal();
+				if(integer!=null && isWord(","))
+				{
+					result.add(integer);
+					integer = Integer_Literal();
+					if(integer != null && isWord(";"))
+					{
+						result.add(integer);
+						return result;
+					}
+				}
+			}
+		}
+		
+		stxr.setCur(save);
+		return null;
 	}
 	
 	
@@ -167,11 +182,22 @@ public class Syntaxer extends Info{
 		
 		SNode result = null;
 		
+
+
 		if((result=VDD())!=null||(result=RW())!=null||(result=IfStatement())!=null||(result=WhileStatement())!=null||((result=RightValue())!=null && isWord(";"))/*||isWord(";")*/)
 		{
 			System.out.println("statement");
 			return result;
 		}
+		
+		
+		stxr.setCur(save);	
+		if((result=xxx()) != null)
+		{
+			System.out.println("xxx");
+			return result;
+		}	
+		
 		
 		stxr.setCur(save);	
 		return null;
