@@ -19,7 +19,7 @@ public class SNode extends DefaultMutableTreeNode{
     // Line number of the current node
     private int lineNum;
 
-    //tag¡–±Ì
+    //tag list
     public static final String Program="program";
     public static final String Function_definition="function_definition";
     public static final String Returen_node="return_node";
@@ -31,7 +31,7 @@ public class SNode extends DefaultMutableTreeNode{
     public static final String Read="read";
     public static final String Write="write";
     public static final String Write_string="write_string";
-    public static final String String_literal="striing_literal";
+    public static final String String_literal="string_literal";
     public static final String Assignment="assignment";
     public static final String Add="add";
     public static final String Sub="sub";
@@ -50,6 +50,12 @@ public class SNode extends DefaultMutableTreeNode{
     public static final String DT="DT";
     public static final String Integer_literal="integer_literal";
     public static final String Real_integer="real_integer";
+    public static final String GT="<";
+    public static final String LT=">";
+    public static final String GET=">=";
+    public static final String LET="<=";
+    public static final String EQ="==";
+    public static final String NEQ="<>";
     
     public boolean isTN()
     {
@@ -106,7 +112,7 @@ public class SNode extends DefaultMutableTreeNode{
     }
 
     public SNode getChildAt(int index) {
-        return (SNode)super.getChildAt(index);
+        return (SNode) super.getChildAt(index);
     }
 
 
