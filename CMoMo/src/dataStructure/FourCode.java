@@ -9,13 +9,15 @@ public class FourCode {
 	
     public static final String JUMP = "jump";    //unconditional jump
     public static final String JUMP0="jump0";    //conditional jump
+    public static final String INVOKE="invoke";
+    public static final String RETURN="return";
 	public static final String READ = "read";
 	public static final String WRITE = "write";
 	public static final String IN = "in";
 	public static final String OUT = "out";
 	public static final String INT = "int";
 	public static final String REAL = "real";
-	public static final String MOVE = "=";
+	public static final String ASSIGN = "=";
 	public static final String ADD = "+";
 	public static final String SUB = "-";
 	public static final String MUL = "*";
@@ -27,6 +29,8 @@ public class FourCode {
 	public static final String EQ = "==";
 	public static final String NEQ = "<>";
 	public static final String LABEL="label";
+	public static final String PARAMETER="parameter";
+	public static final String ARGUMENT="argument";
 	
 	public FourCode(String op, String arg1, String arg2, String result,int lineNo) {
 		this.op=op;
