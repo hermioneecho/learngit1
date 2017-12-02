@@ -7,14 +7,17 @@ import Symbol.Function;
 import Symbol.TARG;
 import dataStructure.FourCode;
 import dataStructure.SNode;
+import dataStructure.SyntaxException;
 /*
  * FourCode generator
  */
 public class FourCodeGenerator {
 	private static int lineNo;   //line number of each Four Code, start from zero
-	private static int level;
-	private static TARG temp;
 	
+	/**
+	 * temporary variable
+	 */
+	private static TARG temp;    
 	/**
 	 * store the obtained symbol in corresponding symbol list respectively.
 	 */
@@ -25,16 +28,14 @@ public class FourCodeGenerator {
 	 */
 	private static ArrayList<SNode> parameterList;
 	
-	/**
-	 * list for argument in function call
-	 */
-	private static ArrayList<SNode> argumentList;
-	
 	private static ArrayList<FourCode> codes;
 	
-	Function function=new Function();
+	/**
+	 * arrayList to store functions
+	 */
 	private static ArrayList<Function> functionList;
 	
+	private static ArrayList<SyntaxException> error;
 	
 	/**
 	 * @param result
@@ -43,13 +44,15 @@ public class FourCodeGenerator {
 	 * The input is the TreeNode List from Syntaxes, and output is an array list of FourCode.
 	 */
 	public static ArrayList<FourCode> execute(SNode result) throws Exception{
-		lineNo=0;
-		level=0;
-		try {
+		lineNo=0;     //FourCode starts from 0.
+		try 
+		{
 			FourCodeGenerator generator=new FourCodeGenerator();
 			generator.interpret(result);
 			return codes;
-		}catch(Exception e) {
+		}
+		catch(Exception e) 
+		{
 			throw new Exception();
 		}
 	}
@@ -60,7 +63,8 @@ public class FourCodeGenerator {
 	 * Jump to the corresponding function according to the Tag of the root node. 
 	 */
 	public void interpret(SNode node) throws Exception {
-		switch(node.getTag()) {
+		switch(node.getTag())
+		{
 	    	case "function_definition":
 	    		functionDefinition(node);
 	    		break;
@@ -95,49 +99,93 @@ public class FourCodeGenerator {
 		//TODO:get the lineNo of code for the appearance of each parameter.
 		int i=0;
 		int j=1;
+		
+		Function function=new Function();
+		
 		SNode returnValue=node.getChildAt(i);
 		SNode functionName=node.getChildAt(i+1);
 		SNode parameterList=node.getChildAt(i+2);
 		int fromIndex=lineNo;
-		codes.add(new FourCode(returnValue.getTag(),null,String.valueOf(lineNo++),functionName.getTag(),getLineNo()));
+		
+		if(returnValue.getTag()=="int")
+		{
+			codes.add(new FourCode(FourCode.INT,null,String.valueOf(lineNo++),functionName.getTag(),getLineNo()));
+		}
+		else if(returnValue.getTag()=="real")
+		{
+			codes.add(new FourCode(FourCode.REAL,null,String.valueOf(lineNo++),functionName.getTag(),getLineNo()));
+		}
+		else {
+			error.add(new SyntaxException("Function<"+functionName.getTag()+"> lacks return value.",returnValue.getLineNum()));
+		}
 		//get the parameters from parameter list and add a FourCode for each parameter
-		for(j=1;j<=node.getDepth();j++) {
-			if(node.getChildAt(i+2+j).getTag()=="parameter") {
+		SNode checkPL=node.getChildAt(i+2+j);
+		for(j=1;j<=node.getDepth();j++)
+		{
+			if(checkPL.getTag()=="parameter")
+			{
 				SNode tag=node.getChildAt(i+2+j+1);
 				SNode identifier=node.getChildAt(i+2+j+2);
-				//check if there are same variable in one parameter list?
-				checkID(identifier);
-				codes.add(new FourCode(tag.getContents().toString(),identifier.getContents().toString(),null,null,getLineNo()));
+				if(tag.getContents().toString()=="int") 
+				{
+					codes.add(new FourCode(FourCode.INT,identifier.getContents().toString(),FourCode.ARGUMENT,null,getLineNo()));
+				}
+				else if(tag.getContents().toString()=="real")
+				{
+					codes.add(new FourCode(FourCode.REAL,identifier.getContents().toString(),FourCode.ARGUMENT,null,getLineNo()));
+				}
+				else {
+					error.add(new SyntaxException("Parameter<"+identifier.getContents().toString()+"> lacks data type.",checkPL.getLineNum()));
+				}
+				
 				parameterList.add(identifier);     
-			}else {
+			}
+			//if there are no parameter
+			else {
 				break;
 			}
 			j+=2;
 		}
+		
+		codes.add(new FourCode(FourCode.JUMP0,String.valueOf(lineNo+2),null,null,getLineNo()));
+		
 		//set a FourCode to record the entry to function body
 		codes.add(new FourCode(FourCode.IN,null,null,null,getLineNo()));
 		SNode body=node.getChildAt(i+2+j);
 		interpret(body);
+		
+		//FourCode for return statement
+		for(int x=0;x<node.getDepth();x++) 
+		{
+			if(node.getTag()=="return_node")
+			{
+				codes.add(new FourCode(FourCode.RETURN,String.valueOf(node.getChildAt(x+1).getContents()),null,String.valueOf(fromIndex),getLineNo()));
+			}
+			else
+			{
+				error.add(new SyntaxException("Function<"+functionName.getTag()+"> lacks return statement.",node.getChildAt(x+1).getLineNum()));
+			}
+		}
+		
 		//set a FourCode to record the out of the function body
 		int toIndex=lineNo;
 		codes.add(new FourCode(FourCode.OUT,null,null,null,getLineNo()));
+		
 		List<FourCode> functionCode=codes.subList(fromIndex, toIndex);
 		function.setFunctionCode(functionCode);
+		function.setFunctionName(functionName.getTag());
 		functionList.add(function);
 	}
 	
 	public void ifStatement(SNode node)throws Exception{
 			int i=0;     //the subscript of the child node
-			FourCode if_jmp=new FourCode(FourCode.JUMP,expression(node.getChildAt(i)),null,null,lineNo);
+			FourCode if_jmp=new FourCode(FourCode.JUMP,expression(node.getChildAt(i)),null,null,getLineNo());
 			i++;
 			codes.add(if_jmp);
-			lineNo++;
-			codes.add(new FourCode(FourCode.IN,null,null,null,lineNo));
-			lineNo++;
+			codes.add(new FourCode(FourCode.IN,null,null,null,getLineNo()));
 			interpret(node.getChildAt(i));
 			i++;
-			codes.add(new FourCode(FourCode.OUT,null,null,null,lineNo));
-			lineNo++;
+			codes.add(new FourCode(FourCode.OUT,null,null,null,getLineNo()));
 			if_jmp.setResult(String.valueOf(lineNo)+1);
 	}
 	
@@ -170,33 +218,70 @@ public class FourCodeGenerator {
 		codes.add(new FourCode(FourCode.OUT,null,null,null,getLineNo()));
 		codes.add(new FourCode(FourCode.JUMP,null,null,String.valueOf(lineNo+1),getLineNo()));
 		jmp.setResult(String.valueOf(lineNo+1));
-;
 	}
 	
+	/**
+	 * @param node
+	 * @throws Exception
+	 * variable declaration, including single value,pointer and array value.
+	 */
 	public void declaration(SNode node) throws Exception{
 		int i=0;
-		if(node.getChildAt(i).getTag()=="DT") {
-			if(node.getChildAt(i).getContents()=="int") {
-			codes.add(new FourCode(String.valueOf(node.getChildAt(i).getContents()),null,null,String.valueOf(node.getChildAt(i+1).getContents()),lineNo));
-			lineNo++;
-		    }else if(node.getChildAt(i).getContents()=="real") {
-			codes.add(new FourCode(String.valueOf(node.getChildAt(i).getContents()),null,null,String.valueOf(node.getChildAt(i+1).getContents()),lineNo));
-			lineNo++;
+		if(node.getChildAt(i).getTag()=="DT") 
+		{
+			if(node.getChildAt(i).getContents()=="int") 
+			{
+				//is a pointer?
+				if(node.getChildAt(i+1).equals(true)) {
+					codes.add(new FourCode(FourCode.INT,null,"*",String.valueOf(node.getChildAt(i+2).getContents()),getLineNo()));
+				}
+				else if(node.getChildAt(i+1).equals(false))
+				{
+					codes.add(new FourCode(FourCode.INT,null,node.getChildAt(i+3).getContents().toString(),String.valueOf(node.getChildAt(i+2).getContents()),getLineNo()));
+		        }
+				else
+				{
+					error.add(new SyntaxException("Variable<"+node.getChildAt(i+2).getContents()+"> is not a single value,"
+							+ "a pointer or an array",node.getChildAt(i).getLineNum()));
+				}
+			}
+			else if(node.getChildAt(i).getContents()=="real")
+			{
+				//is a pointer?
+				if(node.getChildAt(i+1).equals(true)) {
+					codes.add(new FourCode(FourCode.REAL,null,"*",String.valueOf(node.getChildAt(i+2).getContents()),getLineNo()));
+				}
+				else if(node.getChildAt(i+1).equals(false))
+				{
+					codes.add(new FourCode(FourCode.REAL,null,node.getChildAt(i+3).getContents().toString(),String.valueOf(node.getChildAt(i+2).getContents()),getLineNo()));
+		        }
+				else
+				{
+					error.add(new SyntaxException("Variable<"+node.getChildAt(i+2).getContents()+"> is not a single value,"
+							+ "a pointer or an array",node.getChildAt(i).getLineNum()));
+				}
 		    }
+		}
+		else {
+			error.add(new SyntaxException("Variable<"+String.valueOf(node.getChildAt(i+1).getContents())+"> is not declared data type.",node.getChildAt(i).getLineNum()));
 		}
 	}
 	
 	public void definition(SNode node) throws Exception{
+		//TODO
 		int i=0;
 		String value=expression(node.getChildAt(i+2));
 		//if not an array
-		if(node.getChildAt(i).getTag()=="assignment") {
-			codes.add(new FourCode(FourCode.MOVE,value,null,String.valueOf(node.getChildAt(i+1).getContents()),getLineNo()));
+		if(node.getChildAt(i).getTag()=="assignment")
+		{
+			codes.add(new FourCode(FourCode.ASSIGN,value,null,String.valueOf(node.getChildAt(i+1).getContents()),getLineNo()));
 		}
 		//if an array
-		if(node.getChildAt(i+2).getTag()=="array_literal_node") {
-			codes.add(new FourCode(FourCode.MOVE,value,null,(String.valueOf(node.getChildAt(i+1).getContents())+"["+"]"),getLineNo()));
+		if(node.getChildAt(i+2).getTag()=="array_literal_node")
+		{
+			codes.add(new FourCode(FourCode.ASSIGN,value,null,(String.valueOf(node.getChildAt(i+1).getContents())+"["+"]"),getLineNo()));
 		}
+		if(no)
 	}
 
 	public void writeStatment(SNode node) throws Exception{
@@ -220,7 +305,8 @@ public class FourCodeGenerator {
 	 * do with expression, including logical expression, term expression,variable, left value and normal expression
 	 */
 	public String expression(SNode node) throws Exception{
-		switch(node.getTag()) {
+		switch(node.getTag())
+		{
 		case "cond":
 			logicalExpression(node);
 			break;
@@ -236,6 +322,12 @@ public class FourCodeGenerator {
 		case "div":
 			divExpression(node);
 			break;
+		case "read":
+			return (String)node.getChildAt(0).getContents();
+		case "write":
+			return (String)node.getChildAt(0).getContents();
+		case "write_string":
+			return (String)node.getChildAt(0).getContents();
 		case "integer_literal":
 			return (String) node.getContents();
 		case "real_literal":
@@ -259,29 +351,34 @@ public class FourCodeGenerator {
 	public void functionCall(SNode node)throws Exception {
 		int i=0;
 		String functionName=node.getChildAt(i).getContents().toString();
-		for(Function function:functionList) {
-			if(function.getFunctionName()==functionName) {
+		for(Function function:functionList)
+		{
+			if(function.getFunctionName()==functionName)
+			{
 				//get the lineNo of FourCode of the function definition
 				int jumpTo=function.getFunctionCode().get(0).getLineN();
-				codes.add(new FourCode(FourCode.JUMP,String.valueOf(jumpTo),null,String.valueOf(functionName),getLineNo()));
-				for(int x=1;x<=node.getDepth();x++) {
-					if(node.getChildAt(i+1+x).getTag()=="parameter") {
+				for(int x=1;x<=node.getDepth();x++) 
+				{
+					if(node.getChildAt(i+1+x).getTag()=="parameter") 
+					{
 						SNode tag=node.getChildAt(i+1+x+1);
 						SNode identifier=node.getChildAt(i+1+x+2);
-						//check if there are same variable in one parameter list?
-						checkID(identifier);
-						codes.add(new FourCode(tag.getContents().toString(),identifier.getContents().toString(),null,null,getLineNo()));
-						argumentList.add(identifier);     
-					}else {
+						codes.add(new FourCode(tag.getContents().toString(),identifier.getContents().toString(),FourCode.PARAMETER,null,getLineNo()));     
+					}
+					//if there are no parameter list
+					else {
 						break;
 					}
-				for(int j=0;j<function.getFunctionCode().size();j++) {
-					codes.add(function.getFunctionCode().get(j));
 				}
+				codes.add(new FourCode(FourCode.INVOKE,String.valueOf(jumpTo),null,String.valueOf(functionName),getLineNo()));
 			}
+			else
+			{
+				error.add(new SyntaxException("Function<"+String.valueOf(functionName)+"> is not defined.",node.getChildAt(i).getLineNum()));
+			}
+				
 		  }
 		}
-	}
 	
 	/**
 	 * @param node
@@ -294,7 +391,8 @@ public class FourCodeGenerator {
 		String tempName=temp.getTemp();
 		SNode arg1=node.getChildAt(i);
 		SNode arg2=node.getChildAt(i+1);
-		switch(String.valueOf(node.getContents())) {
+		switch(String.valueOf(node.getContents()))
+		{
 		case "<>":
 			codes.add(new FourCode(FourCode.NEQ,expression(arg1),expression(arg2),tempName,getLineNo()));
 			targ.add(temp);
@@ -369,17 +467,6 @@ public class FourCodeGenerator {
 //		
 //	}
 	
-	/**
-	 * check if there are the same variable name in one parameter list, if there are, throw Exception.
-	 */
-	public void checkID(SNode node) throws Exception{
-		for(SNode snode:parameterList) {
-			if(node.getContents()==snode.getContents()) {
-				throw new Exception("Not allow to use the same variable name in one parameter list!");
-			}
-		}
-	}
-	
 	public int getLineNo() {
 		lineNo++;
 		return (lineNo-1);
@@ -387,14 +474,6 @@ public class FourCodeGenerator {
 
 	public static void setLineNo(int lineNo) {
 		FourCodeGenerator.lineNo = lineNo;
-	}
-
-	public static int getLevel() {
-		return level;
-	}
-
-	public static void setLevel(int level) {
-		FourCodeGenerator.level = level;
 	}
 
 	public static ArrayList<FourCode> getCodes() {
@@ -413,12 +492,12 @@ public class FourCodeGenerator {
 		FourCodeGenerator.parameterList = paramterList;
 	}
 
-	public static ArrayList<SNode> getArgumentList() {
-		return argumentList;
+	public static ArrayList<SyntaxException> getError() {
+		return error;
 	}
 
-	public static void setArgumentList(ArrayList<SNode> argumentList) {
-		FourCodeGenerator.argumentList = argumentList;
+	public static void setError(ArrayList<SyntaxException> error) {
+		FourCodeGenerator.error = error;
 	}
 
 }
