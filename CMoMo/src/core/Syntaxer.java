@@ -684,7 +684,6 @@ public class Syntaxer extends Info{
 	        		if((expression = RightValue())!=null && isWord(";"))
 	        		{
 	        			// syntax direct
-	        			definition = new SNode("definition", null, stxr.getLine());
 	        			definition.add(expression);
 	        			System.out.println("VDD - defined by expression");
 	        			return definition;

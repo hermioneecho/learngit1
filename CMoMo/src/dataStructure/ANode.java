@@ -1,5 +1,6 @@
 package dataStructure;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,6 +19,10 @@ public class ANode extends DefaultMutableTreeNode{
 
 	private String tag;
 	
+	private Object contents;
+	
+	private int lineNo;
+	
 	
 	/**
 	 * String as the name of the attribute and Object as the value
@@ -28,6 +33,8 @@ public class ANode extends DefaultMutableTreeNode{
 		super();
 		// TODO Auto-generated constructor stub
 		tag = snode.getTag();
+		contents = snode.getContents();
+		lineNo = snode.getLineNum();
 	}
 		
 	/**
@@ -37,7 +44,7 @@ public class ANode extends DefaultMutableTreeNode{
 	public ANode convert(SNode root)
 	{
 		ANode result = new ANode(root);
-		Enumeration<SNode> children = root.children();
+		Enumeration<?> children = root.children();
 		while(children.hasMoreElements())
 		{
 			result.add(convert((SNode) children().nextElement()));
@@ -67,6 +74,40 @@ public class ANode extends DefaultMutableTreeNode{
 		result += "}";
 		return result;
 	}
+
+	public String getTag() {
+		return tag;
+	}
+
+	public Object getContents() {
+		return contents;
+	}
+
+	public int getLineNo() {
+		return lineNo;
+	}
+
+    public ANode getChildAt(int index) {
+        return (ANode) super.getChildAt(index);
+    }
+
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+	
+    
+    
+//	public ArrayList<ANode> getChildren() {
+//		// TODO Auto-generated method stub
+//		ArrayList<ANode> result = new ArrayList<ANode>();
+//		for(int i=0; i<this.getChildCount(); i++)
+//		{
+//			result.add((ANode) this.getChildAt(i));
+//		}
+//		if(result.size() == 0)
+//			return null;
+//		return result;
+//	}
 	
 	
 	
