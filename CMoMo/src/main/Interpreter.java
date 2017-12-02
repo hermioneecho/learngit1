@@ -16,6 +16,7 @@ public class Interpreter extends Info{
 	static private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 	static private Lexer lexer;
 	static private Syntaxer syntaxer;
+	static private Aer aer;
 	
 
 	public static void main ( String args [ ] ) {
@@ -32,8 +33,10 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
-				Demo result = new Demo(syntaxer.getRoot());
-				result.show(syntaxer.getRoot());
+					aer = new Aer(syntaxer.getRoot());
+					aer.fillAST();
+					Demo result = new Demo(aer.getRoot());
+					result.show(aer.getRoot());
 				}
 				else
 				{
@@ -53,8 +56,10 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
-				Demo result = new Demo(syntaxer.getRoot());
-				result.show(syntaxer.getRoot());
+					aer = new Aer(syntaxer.getRoot());
+					aer.fillAST();
+					Demo result = new Demo(aer.getRoot());
+					result.show(aer.getRoot());
 				}
 				else
 				{

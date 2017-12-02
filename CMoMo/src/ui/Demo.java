@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 
+import dataStructure.ANode;
 import dataStructure.SNode;
 
 import java.awt.Color;
@@ -49,11 +50,54 @@ public class Demo extends JFrame {
 			}
 		});
 	}
+	
+	public void show(ANode root) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					Demo frame = new Demo(root);
+					frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
 
 	/**
 	 * Create the frame.
 	 */
 	public Demo(SNode root) {
+		/**
+		 * code I add to add a tree
+		 */
+	    tree = new JTree(root);
+		
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 615, 441);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		contentPane.setLayout(new BorderLayout(0, 0));
+		setContentPane(contentPane);
+		
+		tabbedPane = new JTabbedPane(JTabbedPane.TOP);
+		contentPane.add(tabbedPane, BorderLayout.CENTER);
+		
+		welcome = new JPanel();
+		tabbedPane.addTab("welcome tab", null, welcome, null);
+		
+		treeTab = new JPanel();
+		tabbedPane.addTab("document tab", null, treeTab, null);
+		treeTab.setLayout(new BorderLayout(0, 0));
+		
+		scrollPane = new JScrollPane(tree);
+		scrollPane.setViewportBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
+		treeTab.add(scrollPane);
+		
+
+	}
+	
+	public Demo(ANode root) {
 		/**
 		 * code I add to add a tree
 		 */

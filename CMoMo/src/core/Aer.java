@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Map.Entry;
 
 import dataStructure.ANode;
 import dataStructure.SNode;
@@ -28,46 +29,110 @@ public class Aer {
 	 * @ more information can be saw in WangYin's famous article : How to write an interpreter 
 	 * @ To detect the re-declaration problem I use Map for convenience
 	 */
-	private Map<String,ANode> globalEnv;
+	private static Map<String,ANode> globalEnv;
 	
 	
 	/**
 	 * local environment. local variables for each function
 	 */
-	private Map<String, HashMap<String, ANode>> localEnvs;
+	private static Map<String, HashMap<String, ANode>> localEnvs;
 	
 	/**
 	 * indicate which local environment it is now
-	 * 0 if only global environment
+	 * -1 if only global environment
 	 */
-	private int currentEnv;
+	private static int currentEnv;
 	
-	private List<String> strings;
+	private static List<String> strings;
 	
 	/**
 	 * @ the name should be doubles but historically it is float that is to be put into the stack.
 	 * @ an ArrayList for the real_literal
 	 */
-	private List<Double> floats;
+	private static List<Double> floats;
 	
 	/**
 	 * root of ANode tree
 	 */
-	private ANode A;
+	private static ANode A;
 	
-	private  getVariable()
+	
+	/**
+	 * @param id
+	 * @return Anode with the Symbol name id, null if no
+	 */
+	private ANode getVariable(String id)
 	{
-		
+		// search the environment and return the ANode
+		// variable could be anything that has a ID
+		ANode result = null;
+		//search local environment
+		if(currentEnv != -1)
+			result = localEnvs.get(currentEnv).get(id);
+		if(result == null)
+			result = globalEnv.get(id);
+		return result;
 	}
+	
+	/**
+	 * @param rnode
+	 * @return anode being referenced by rnode(rnode is a "left_value", with the same identifier)
+	 */
+	private ANode getVariableByNode(ANode rnode)
+	{
+		return getVariable((String)(((ArrayList<Object>)rnode.getContents()).get(1)));
+	}
+	 
 
 	public Aer(SNode S) {
 		super();
-		A = new ANode(S);
-		A.convert(S);
+		A = ANode.convert(S);
 		globalEnv = new HashMap<String,ANode>();
 		localEnvs = new HashMap<String,HashMap<String,ANode>>();
 		strings = new ArrayList<String>();
 		floats = new ArrayList<Double>();
+	}
+	
+	public void fillAST()
+	{
+		if(setGlobalEnv())
+			System.out.println("fill AST successfully!");
+		else
+		System.out.println("fail to fill AST");
+		
+		//show the globalEnv
+
+			String result = "GlobalEnv: \n";
+			java.util.Iterator<Entry<String, ANode>> attrI = globalEnv.entrySet().iterator();
+			Entry<String, ANode> cur = null;
+			
+			while(attrI.hasNext())
+			{
+				cur = attrI.next();
+				result+=cur.getKey()+":"+ cur.getValue().toString()+"\n";
+			}
+			System.out.println(result);
+	}
+	
+	public ANode getRoot()
+	{
+		return A;
+	}
+	
+	/**
+	 * @param symbol
+	 * @param node£¬ the node is named as symbol
+	 * if the symbol exists already then do nothing
+	 */
+	private static boolean addToGlobal(String symbol, ANode node)
+	{
+		if(!globalEnv.containsKey(symbol))
+		{
+			globalEnv.put(symbol, node);
+			return true;
+		}
+		node.goodNodeComeBad("the symbol(identifier) already exists!");
+		return false;
 	}
 	
 	/**
@@ -76,7 +141,7 @@ public class Aer {
 	 */
 	private boolean setGlobalEnv()
 	{
-		currentEnv = 0;
+		currentEnv = -1;
 		Enumeration<ANode> round = A.children();
 		ANode tmp = null;
 		int variableCount = 0;
@@ -89,21 +154,36 @@ public class Aer {
 			if(tmp.getTag().equals("function_definition"))
 			{
 				symbol = this.AFunctionDefinition(tmp);
-				globalEnv.put(symbol, tmp);
-				functionCount++;
+				if(symbol == null)
+					return false;
+				if(addToGlobal(symbol, tmp))
+				{
+					functionCount++;
+				}
 			}
 			else
 			{
 				if(tmp.getTag().equals("declaration"))
 				{
 					symbol = this.ADeclaration(tmp);
-					globalEnv.put(symbol, tmp);
+					if(symbol == null)
+						return false;
+					if(addToGlobal(symbol, tmp))
+					{
+						variableCount++;
+					}
 				}
 				else
 				{
 					//definition, needs more attentions
+					symbol = this.AGlobalDefinition(tmp);
+					if(symbol == null)
+						return false;
+					if(addToGlobal(symbol, tmp))
+					{
+						variableCount++;
+					}
 				}
-				variableCount++;
 			}
 		}
 		
@@ -159,18 +239,185 @@ public class Aer {
 		else
 			a.addAttribute("Pointer", true);
 		if(arraysize > 0)
-			a.addAttribute("Array", arraysize);
+			a.addAttribute("Array Size", arraysize);
 		else
-			a.addAttribute("Array", null);
+			a.addAttribute("Array Size", (int)0);
 		return ID;
 	}
 	
-	private String ADefinition(ANode a)
+	/**
+	 * @param a
+	 * @return name of the global defined variable only, not local one
+	 * tag "initialized value" to Anode a, to be used by the Loader
+	 */
+	private String AGlobalDefinition(ANode a)
 	{
-		//generate the byte code to the method area? no, calculate them all
+		String symbol = this.ADeclaration(a);
+		ANode rightValue = a.getChildAt(2);
+		int arraysize = 0;
+		//write a function to compare the two ANodes
+		
+		//is Array?
+		if((arraysize=(int)a.getAttribute("Array Size"))>0)
+		{
+			if(rightValue.getTag().equals("array_literal_node"))
+			{
+				String arrayType = null;
+				String entryTpye = null;
+				ANode entry = null;
+				List<Object> valueArray = new ArrayList<Object>();
+				// at least one element in the array
+				if(rightValue.getChildAt(0).getTag().equals("integer_literal"))
+				{
+					arrayType = "int";
+					entryTpye = "integer_literal";
+				}
+				else
+				{
+					arrayType = "real";
+					entryTpye = "integer_literal";
+				}
+				Enumeration<ANode> entries = rightValue.children();
+				while(entries.hasMoreElements())
+				{
+					if((entry=entries.nextElement()).getTag().equals(entryTpye))
+					{
+						valueArray.add(entry.getContents());
+					}
+					else
+					{
+						a.goodNodeComeBad("Unmatched Array Entry Type");
+						return null;
+					}
+				}
+				rightValue.addAttribute("Array Values", valueArray);
+				if(arraysize != valueArray.size())
+				{
+					a.goodNodeComeBad("Unmatched Array Entries Numbers");
+					return null;
+				}
+				else
+					a.addAttribute("Array Values",valueArray);
+				return symbol;
+			}
+		}
+			
+		//is pointer?
+		// &array[1] is forbidden
+		else if((boolean)a.getAttribute("Pointer"))
+		{
+			if(rightValue.getTag().equals("address_of_identifier"))
+			{
+				String pointTo = (String)rightValue.getContents();
+				if(compare(getVariable(pointTo),a,"Data Type"))
+				{
+					a.addAttribute("Point To", pointTo);
+					return symbol;
+				}
+				a.goodNodeComeBad("Unmatched Type");
+				return null;
+			}
+			else
+			{
+				ANode id = getVariableByNode(rightValue);	
+				if(id!=null)
+				{
+					a.goodNodeComeBad("use unexist symbol(identifier");
+					return null;
+				}
+				if(compare(id,a,"Data Type") && (boolean)id.getAttribute("Pointer"))
+				{
+					a.addAttribute("Point To", id.getAttribute("Point To"));
+					rightValue.setTag("right_value");
+					return symbol;
+				}
+				a.goodNodeComeBad("Unmatched Type");
+				return null;
+			}
+		}
+		
+		//is value assignment. a is not pointer or array
+		else {
+			// if dereference a pointer, assign the "Point To" to it
+			// if dereference an array, extract and assign the value to it
+			// if identifier, test data type and initialize data
+			// if literal, just do it, needn't to push double to float, because just assign
+			int index;
+			
+			// assign a literal
+			if(rightValue.getTag().equals("integer_literal"))
+			{
+				if(a.getAttribute("Data Type").equals("int"))
+				{
+					a.addAttribute("Initial Value", (int)rightValue.getContents());
+					return symbol;
+				}
+				else
+				{
+					a.goodNodeComeBad("Unmatched Type");
+					return null;
+				}
+			}
+			else if(rightValue.getTag().equals("real_literal"))
+			{
+				if(a.getAttribute("Data Type").equals("real"))
+				{
+					a.addAttribute("Initial Value", (double)rightValue.getContents());
+					return symbol;
+				}
+				else
+				{
+					a.goodNodeComeBad("Unmatched Type");
+					return null;
+				}
+			}
+			
+			// assign a "left value"
+			ANode id = getVariableByNode(rightValue);
+			if(id==null)
+			{
+				a.goodNodeComeBad("use unexist symbol");
+			}
+			if(compare(id, a, "Data Type")==false)
+			{
+				a.goodNodeComeBad("Unmatched Type");
+				return null;
+			}
+			if((boolean)id.getAttribute("Pointer"))
+			{
+				rightValue.setTag("right_value");
+				a.addAttribute("Dereference", (String)id.getAttribute("Point To"));
+				return symbol;
+			}
+			else if((index=(int)((ArrayList<Object>)rightValue.getContents()).get(2))>0)
+			{
+				if(index >= (int)id.getAttribute("Array Size"))
+				{
+					a.goodNodeComeBad("Out of Range");
+					return null;
+				}
+				rightValue.setTag("right_value");
+				// get the literal 
+				Object value = ((ArrayList<Object>)id.getAttribute("Array Values")).get(index);
+				a.addAttribute("Initial Value", value);
+				return symbol;
+			}
+			else
+			{
+				rightValue.setTag("right_value");
+				a.addAttribute("Dereference", (String)id.getAttribute("Symbol"));
+				return symbol;
+			}
+		}						
+	
 		return null;
 	}
 	
+	
+	private static boolean compare(ANode a, ANode b, String tag)
+	{
+		return a.getAttribute(tag).equals(b.getAttribute(tag));
+	}
 	
 	
 	
