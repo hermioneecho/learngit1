@@ -5,14 +5,13 @@ package core;
 
 import java.util.ArrayList;
 import dataStructure.Token;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Map.Entry;
 
+import cvm.DebugInfo;
 import dataStructure.ANode;
 import dataStructure.SNode;
 
@@ -69,9 +68,13 @@ public class Aer {
 		ANode result = null;
 		//search local environment
 		if(currentEnv != -1)
+		{
 			result = localEnvs.get(currentEnv).get(id);
+		}
 		if(result == null)
 			result = globalEnv.get(id);
+		if(result.getTag().equals("Bad Node"))
+			return null;
 		return result;
 	}
 	
@@ -429,6 +432,26 @@ public class Aer {
 		return a.getAttribute(tag).equals(b.getAttribute(tag));
 	}
 	
+	/*
+	 * it is time to cope with the local environment, the task is only focus on:
+	 * 1. use the unmatched variable, the type check
+	 * 2. use the unexist variable
+	 * 3. generate bytecode...
+	 * 4. done by the following function Compile
+	 */
 	
+	/*
+	 * How to:
+	 * 1. Walk through and the types of operation are limited
+	 * 2. for Arithmetic operations, finish the unit_expression first(using the stack bytecode) the backup and just generate code
+	 * 3. for IO, just generate it
+	 * 4. for function, just generate it
+	 * 5. for jump, fill back. keep some local number in the stack and when comes back we fill
+	 * 6. xxx, with a stack operation, just generate it 
+	 */
+	
+	private DebugInfo Compile(){
+		return null;
+	}
 	
 }

@@ -118,6 +118,7 @@ public class ANode extends DefaultMutableTreeNode{
 		this.attributes = new HashMap<String, Object>();
 		this.attributes.put("Semantic Error", info);
 		this.attributes.put("Tag", this.getTag());
+		this.attributes.put("Line Number", lineNo);
 		this.setTag("Bad Node");
 		illegalNode.add(this);
 	}
