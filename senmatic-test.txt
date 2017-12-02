@@ -1,3 +1,4 @@
-int i = 1;
-int ia[2] = {1,2};
-int j = ia[1];
+int foo(int i, int r)
+{
+return 1;
+}
