@@ -10,7 +10,6 @@ import dataStructure.*;
 import ui.Demo;
 import core.*;
 
-import core.*;
 
 public class Interpreter extends Info{
 	static private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -32,7 +31,10 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
-				Demo result = new Demo(syntaxer.getRoot());
+				Demo result = new Demo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
+				result.setBounds(60, 0, 1240, 742);
+				result.setResizable(true);
+				result.setVisible(true);
 				result.show(syntaxer.getRoot());
 				}
 				else
@@ -53,16 +55,18 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
-				Demo result = new Demo(syntaxer.getRoot());
+				Demo result = new Demo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
+				result.setBounds(60, 0, 1240, 742);
+				result.setResizable(true);
+				result.setVisible(true);
 				result.show(syntaxer.getRoot());
 				}
 				else
 				{
 					System.out.println("invalid program!");
 				}
-
 		    }
-		} catch (IOException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

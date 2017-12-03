@@ -31,6 +31,10 @@ public class SyntaxerReader{
     	}
 		this.count = tokens.size();
 	}
+	
+	public ArrayList<Token> getTokens(){
+		return tokens;
+	}
 
 	// hasNext
 	public boolean hasNext()

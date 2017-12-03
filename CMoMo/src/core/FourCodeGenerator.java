@@ -77,6 +77,8 @@ public class FourCodeGenerator {
 			case "definition":
 				definition(node);
 				break;
+			case "assignment":
+				assignment(node);
 			case "if_node":
 				ifStatement(node);
 				break;
@@ -281,9 +283,12 @@ public class FourCodeGenerator {
 		{
 			codes.add(new FourCode(FourCode.ASSIGN,value,null,(String.valueOf(node.getChildAt(i+1).getContents())+"["+"]"),getLineNo()));
 		}
-		if(no)
 	}
 
+	public void assignment(SNode node) throws Exception{
+		
+	}
+	
 	public void writeStatment(SNode node) throws Exception{
 		int i=0;
 		SNode exp=node.getChildAt(i);

@@ -1,6 +1,7 @@
 package dataStructure;
 
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,6 +27,7 @@ public class ANode extends DefaultMutableTreeNode{
 	
 	public ANode(SNode snode) {
 		super();
+		attributes=new HashMap<String, Object>();
 		// TODO Auto-generated constructor stub
 		tag = snode.getTag();
 	}

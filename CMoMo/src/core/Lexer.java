@@ -101,5 +101,9 @@ public class Lexer {
 		this.rws = rws;
 	}
 	
+	public Lexer() {
+		super();
+	}
+	
 	
 }
