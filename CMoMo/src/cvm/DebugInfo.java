@@ -1,6 +1,7 @@
 package cvm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,11 +38,53 @@ public class DebugInfo{
 	 * 10. if debug, the keeps the breakpoint location in the source file and run in CVM DebugMode 
 	 * */
 	
-	private Map<Integer/*the line number*/,List<DebugBytecode>> debugCodes;
+	private Map<Integer/*the line number*/, ArrayList<DebugBytecode>> debugCodes;
+	
+	/**
+	 * the index is function index, and beginLine.get(index) return the line 
+	 * where the function begins(the first line inside the body)
+	 */
+	private List<Integer> beginLine;
+	
+	private List<Integer> endLine;
 	
 	/**
 	 * contains all the information generate during the global setting and assembling
 	 */
 	private Aer aer;
+
+	public DebugInfo(Aer aer) {
+		super();
+		this.aer = aer;
+		debugCodes = new HashMap<Integer, ArrayList<DebugBytecode>>();
+		beginLine = new ArrayList<Integer>();
+		endLine = new ArrayList<Integer>();
+	}
+	
+	public ArrayList<DebugBytecode> getCodes(int lineNo)
+	{
+		ArrayList<DebugBytecode> result = debugCodes.get(lineNo);
+		if(result == null)
+		{
+			result = new ArrayList<DebugBytecode>();
+			debugCodes.put(lineNo, result);
+		}
+		return result;
+	}
+
+	public void pushCode(int lineNo, DebugBytecode dbc)
+	{
+		getCodes(lineNo).add(dbc);
+	}
+	
+	public void setOp(int lineNo, int dbcNo, int newOp)
+	{
+		getCodes(lineNo).get(dbcNo).setAddress(newOp);
+	}
+
+	
+	
+	
+
 	
 }

@@ -58,7 +58,7 @@ public class Aer {
 	 */
 	private static ANode A;
 	
-	private static DebugInfo out;
+	private DebugInfo out;
 	
 	/**
 	 * @param id
@@ -99,6 +99,7 @@ public class Aer {
 	public Aer(SNode S) {
 		super();
 		A = ANode.convert(S);
+		out = new DebugInfo(this);
 		globalEnv = new HashMap<String,ANode>();
 		localEnvs = new HashMap<String,HashMap<String,ANode>>();
 		strings = new ArrayList<String>();
@@ -219,7 +220,7 @@ public class Aer {
 		ANode id = a.getChildAt(1);
 		ANode pl = a.getChildAt(2);
 		
-		a.addAttribute("Return Type:",(String)dt.getContents());
+		a.addAttribute("Data Type:",(String)dt.getContents());
 		a.addAttribute("Symbol", getSymbolFromMkid(id));
 		int plsize = pl.getChildCount();
 		a.addAttribute("Parameter Size", plsize);
@@ -467,38 +468,215 @@ public class Aer {
 	 * @return a stack operation bytecode with debug information
 	 */
 	
-	private void addToDebugBytecode(DebugBytecode dbc)
-	{
-		
-	}
+
 	
 	/////stop here
-	private DebugBytecode AUnit(ANode a)
+	private void AUnit(ANode a)
 	{
 		if(a.getTag().equals("integer_literal"))
 		{
-			return new DebugBytecode(Kinds.push,(int)a.getContents());
+			addDataType(a, "int");
+			add(a,new DebugBytecode(Kinds.push,(int)a.getContents()));
 		}
 		else if(a.getTag().equals("real_literal"))
 		{
+			addDataType(a, "real");
 			floats.add((double)a.getContents());
-			return new DebugBytecode(Kinds.fpush,floats.size()-1);
+			add(a,new DebugBytecode(Kinds.fpush,floats.size()-1));
 		}
 		else if(a.getTag().equals("function_call"))
 		{
-			return new DebugBytecode(Kinds.invoke,(String)a.getChildAt(0).getContents());
+			//set type
+			String returnType = getDataType(getSymbolFromMkid(a.getChildAt(0)));
+			if(returnType == null)
+			{
+				a.goodNodeComeBad("Unexisted Symbol");
+				return;
+			}
+			addDataType(a,returnType);
+			//push the arguments to the stack
+			ANode al = a.getChildAt(1);
+			Enumeration<ANode> ale = al.children();
+			while(ale.hasMoreElements())
+			{
+				AExpression(ale.nextElement());
+			}
+			//then invoke
+			add(a,new DebugBytecode(Kinds.invoke,(String)a.getChildAt(0).getContents()));
 		}
 		else if(a.getTag().equals("left_value"))
 		{
-			return new DebugBytecode(Kinds.push,(int)a.getContents());
+			ArrayList<Object> contents = (ArrayList<Object>) a.getContents();
+			boolean isPointer = (boolean) contents.get(0);
+			String symbol = (String) contents.get(1);
+			int arraysize = (int) contents.get(2);
+			
+			//check and set the type
+			ANode d = getVariable(symbol);
+			if(d==null)
+			{
+				a.goodNodeComeBad("Unexisted Symbol");
+				return;
+			}
+			a.addAttribute("Data Type", getDataType(d));			
+			
+			//check array, dereference, identifier
+			if(arraysize>0)
+			{
+				if((int)d.getAttribute("Array Size")==0)
+				{
+					a.goodNodeComeBad("Unmatched Type");
+					return;
+				}
+				add(a,new DebugBytecode(Kinds.debugBytecodeGetArray,arraysize,(String)symbol));					
+				a.addAttribute("Data Type", "int");
+			}
+			else if(isPointer)
+			{
+				if((boolean)d.getAttribute("Pointer")==false)
+				{
+					a.goodNodeComeBad("Unmatched Type");
+					return;
+				}
+				add(a,new DebugBytecode(Kinds.aload,symbol));
+			}
+			else if(arraysize==0 && isPointer==false)
+			{
+				if((boolean)d.getAttribute("Pointer")&&(int)d.getAttribute("Array Size")>0)
+				{
+					a.goodNodeComeBad("Unmatched Type");
+					return;
+				}
+				add(a,new DebugBytecode(Kinds.vload,symbol));
+			}
+			else
+			{
+				a.goodNodeComeBad("Unmatched Type");
+				return;
+			}
 		}
 		else if(a.getTag().equals("address_of_identifier"))
 		{
-			return new DebugBytecode(Kinds.push,(int)a.getContents());
+			//check and add
+			ANode d = getVariable((String)a.getContents());
+			if(d==null)
+			{
+				a.goodNodeComeBad("Unexisted Symbol");
+				return;
+			}
+			// ensure it is a pure identifier
+			if((boolean)d.getAttribute("Pointer")==true||(int)d.getAttribute("Array Size")>0)
+			{
+				a.goodNodeComeBad("Unmatched Type");
+				return;
+			}
+			add(a,new DebugBytecode(Kinds.debugBytecodeGetAddress,(String)a.getContents()));
 		}
 		else
-			return null;
+			System.out.println("Unit Error");;
 	}
+	
+	private void AExpression(ANode a)
+	{
+		ANode c1 = a.getChildAt(0);
+		ANode c2 = a.getChildAt(1);
+		
+		AExpression(c1);
+		AExpression(c2);
+		
+		//test the type
+		
+		// first, if the code is bad, we assume it is good
+		// just check the type and not other checking?
+		
+		if(isBad(c1)&&isBad(c2))
+		{
+			//look for the c2 for information, if both bad them this node is bad
+			c1.addAttribute("Data Type", getDataType(c2));
+		}
+		else if((!isBad(c1)&&isBad(c2)))
+		{
+			c2.addAttribute("Data Type", getDataType(c1));
+		}
+		else if(isBad(c1)&&isBad(c2))
+		{
+			a.goodNodeComeBad("Still Bad");
+			return;
+		}
+		
+		if(a.getTag().equals("add"))
+		{
+			
+			add(a,new DebugBytecode(Kinds.add));
+		}
+	}
+	
+	/**
+	 * @param a, knowing which node we put code to
+	 * @param dbc
+	 */
+	private void add(ANode a,DebugBytecode dbc)
+	{
+		out.pushCode(a.getLineNo(), dbc);
+	}
+	
+	private String getAttribute(String symbol, String attribute)
+	{
+		ANode a =  getVariable(symbol);
+		if(a != null)
+		{
+			return (String) a.getAttribute(attribute);
+		}
+		return null;
+	}
+	
+	/**
+	 * @param symbol
+	 * @param attribute
+	 * use to change the variable in the environment's attribute, maybe useless
+	 */
+	private void setAttribute(String symbol, String attribute, Object value)
+	{
+		ANode a =  getVariable(symbol);
+		if(a != null)
+		{
+			a.addAttribute(attribute, value);
+		}
+	}
+	
+	
+	/**
+	 * @param symbol
+	 * @return Data Type of that symbol
+	 */
+	private String getDataType(String symbol)
+	{
+		return getAttribute(symbol, "Data Type");
+	}
+	
+	/**
+	 * @param a
+	 * @return Data Type of a
+	 */
+	private String getDataType(ANode a)
+	{
+		return (String)a.getAttribute("Data Type");
+	}
+	
+	/**
+	 * @param a
+	 * @param type
+	 */
+	private void addDataType(ANode a ,String type)
+	{
+		a.addAttribute("Data Type", type);
+	}
+	
+	private boolean isBad(ANode a)
+	{
+		return a.getTag().equals("Bad Node");
+	}
+	
 	
 	
 	

@@ -19,6 +19,11 @@ public class DebugBytecode /*extends Bytecode*/{
 		this.symbol = null;
 	}
 	
+	public DebugBytecode(Kinds kind, int op, String symbol) {
+		this.bytecode = new Bytecode(kind,op);
+		this.symbol = symbol;
+	}
+	
 	
 	
 	@Override
@@ -26,6 +31,11 @@ public class DebugBytecode /*extends Bytecode*/{
 		return bytecode.toString()+ " " + ((symbol==null)?"":symbol);
 	}
 
+	/**
+	 * @param op
+	 * @ use for loading time, when replace the symbol by an address op
+	 * @ can be used to change the op too
+	 */
 	public void setAddress(int op)
 	{
 		bytecode.setOp(op);
