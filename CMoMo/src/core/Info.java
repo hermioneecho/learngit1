@@ -60,7 +60,7 @@ public class Info {
 	}
 	);
 	
-	//States for reserved key
+	//States for identifier
 	static DFAState identifier0 = new DFAState(0, c->
 	{
 		if(Character.isLetter(c))
@@ -71,8 +71,10 @@ public class Info {
 	;
 	static DFAState identifier1 = new DFAState(1, c->
 	{
-		if(Character.isLetter(c) || Character.isDigit(c) || c == '_')
+		if(c == '_')
 			return 2;
+		else if(Character.isDigit(c)||Character.isLetter(c))
+			return 3;
 		return -1;
 	}
 	)

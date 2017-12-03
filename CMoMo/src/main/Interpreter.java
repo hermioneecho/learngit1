@@ -15,6 +15,7 @@ public class Interpreter extends Info{
 	static private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 	static private Lexer lexer;
 	static private Syntaxer syntaxer;
+	static private Aer aer;
 	
 
 	public static void main ( String args [ ] ) {
@@ -31,11 +32,20 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
+<<<<<<< HEAD
 				Demo result = new Demo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
 				result.setBounds(60, 0, 1240, 742);
 				result.setResizable(true);
 				result.setVisible(true);
 				result.show(syntaxer.getRoot());
+=======
+//					aer = new Aer(syntaxer.getRoot());
+//					aer.fillAST();
+//					Demo result = new Demo(aer.getRoot());
+//					result.show(aer.getRoot());
+					Demo result = new Demo(syntaxer.getRoot());
+					result.show(syntaxer.getRoot());
+>>>>>>> c82a5d1449fe53d8b3880b9910090dca69aa93e0
 				}
 				else
 				{
@@ -55,11 +65,21 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
+<<<<<<< HEAD
 				Demo result = new Demo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
 				result.setBounds(60, 0, 1240, 742);
 				result.setResizable(true);
 				result.setVisible(true);
 				result.show(syntaxer.getRoot());
+=======
+//					aer = new Aer(syntaxer.getRoot());
+//					aer.fillAST();
+//					Demo result = new Demo(aer.getRoot());
+//					result.show(aer.getRoot());
+					
+					Demo result = new Demo(syntaxer.getRoot());
+					result.show(syntaxer.getRoot());
+>>>>>>> c82a5d1449fe53d8b3880b9910090dca69aa93e0
 				}
 				else
 				{

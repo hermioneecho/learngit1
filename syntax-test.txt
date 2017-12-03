@@ -8,6 +8,7 @@ int hello = -1;
 real world = 4.2;
 int array[3] = {1,2,3};
 int *pointer = &hello;
+int *pointer = array[1];
 
 
 /* test for function definition */

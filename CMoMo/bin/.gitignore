@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-/Symbol/
-/bytecode/
 /core/
-/cvm/
 /dataStructure/
 /main/
 /ui/
-=======
-/dataStructure/
->>>>>>> b4218c9cbd966beb95a6922fed7c3bcd5a5adf31
+/cvm/
+/bytecode/
