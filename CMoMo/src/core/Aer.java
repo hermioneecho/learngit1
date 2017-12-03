@@ -37,7 +37,9 @@ public class Aer {
 	/**
 	 * local environment. local variables for each function
 	 */
-	private static Map<String, HashMap<String, ANode>> localEnvs;
+	private static List<HashMap<String/*local variable name*/, ANode/* variable's attribute*/>> localEnvs;
+	
+	private static List<String> functionNames;
 	
 	/**
 	 * indicate which local environment it is now
@@ -101,9 +103,15 @@ public class Aer {
 		A = ANode.convert(S);
 		out = new DebugInfo(this);
 		globalEnv = new HashMap<String,ANode>();
-		localEnvs = new HashMap<String,HashMap<String,ANode>>();
+		localEnvs = new ArrayList<HashMap<String,ANode>>();
 		strings = new ArrayList<String>();
 		floats = new ArrayList<Double>();
+		functionNames = new ArrayList<String>();
+		
+		//add the main fuction
+		currentEnv = 0;
+		functionNames.add("main");
+		
 	}
 	
 	public void fillAST()
@@ -166,7 +174,7 @@ public class Aer {
 			tmp = round.nextElement();
 			if(tmp.getTag().equals("function_definition"))
 			{
-				symbol = this.AFunctionDefinition(tmp);
+				symbol = this.AFunctionDeclaration(tmp);
 				if(symbol == null)
 					return false;
 				if(addToGlobal(symbol, tmp))
@@ -189,7 +197,7 @@ public class Aer {
 				else
 				{
 					//definition, needs more attentions
-					symbol = this.AGlobalDefinition(tmp);
+					symbol = this.ADefinition(tmp);
 					if(symbol == null)
 						return false;
 					if(addToGlobal(symbol, tmp))
@@ -214,7 +222,7 @@ public class Aer {
 		return (String)((Token)id.getContents()).getWord();
 	}
 	
-	private String AFunctionDefinition(ANode a)
+	private String AFunctionDeclaration(ANode a)
 	{
 		ANode dt = a.getChildAt(0);
 		ANode id = a.getChildAt(1);
@@ -272,7 +280,7 @@ public class Aer {
 	 * @return name of the global defined variable only, not local one
 	 * tag "initialized value" to Anode a, to be used by the Loader
 	 */
-	private String AGlobalDefinition(ANode a)
+	private String ADefinition(ANode a)
 	{
 		String symbol = this.ADeclaration(a);
 		ANode rightValue = a.getChildAt(2);
@@ -459,8 +467,88 @@ public class Aer {
 	 * 6. xxx, with a stack operation, just generate it 
 	 */
 	
-	private DebugInfo Assembly(){
-		return null;
+	private void Assembly(){
+		globalEnv.forEach((string,anode)->
+		{
+			if(anode.getTag().equals("function_definition"))
+			{
+				Enumeration<ANode> e = anode.children();
+				ANode c;
+				String symbol;
+				currentEnv = 1; //currentEnv == 0 if the function is main()
+				while(e.hasMoreElements())
+				{
+					/*
+					 * add the name to function name
+					 * 
+					 */
+					if((c=e.nextElement()).getTag().equals("declaration"))
+					{
+						// if null, the code is set as bad automatically
+						if((symbol = this.ADeclaration(c))!=null)
+						{
+							localEnvs.get(currentEnv).put(symbol, c);
+						}
+						
+					}
+					else if(c.getTag().equals("definition"))
+					{
+						// if null, the code is set as bad automatically
+						if((symbol = this.ADeclaration(c))!=null)
+						{
+							localEnvs.get(currentEnv).put(symbol, c);
+						}					
+					}
+					else if(c.getTag().equals("assignment"))
+					{
+						ANode left = c.getChildAt(0);
+						symbol=getSymbolFromLeftValue(left);
+						ADeclaration(left);
+						ANode d = getVariable(symbol);
+						ANode right = c.getChildAt(1);
+						AExpression(right);
+						
+						//check left
+						if(d == null)
+						{
+							c.goodNodeComeBad("Unexisted Symbol");
+							return;
+						}
+						
+						//check right
+						if(isBad(right))
+						{
+							c.goodNodeComeBad("Illegal Expression");
+							return;
+						}
+						
+						//check type
+						if(compare(d,right,"Data Type"))
+						{
+							//pointer
+							if((boolean)d.getAttribute("Pointer") == true && right.getTag().equals("address_of_identifier"))
+								add(c, new DebugBytecode(Kinds.vload,0,symbol));
+							//value
+							if((boolean)d.getAttribute("Pointer") == false && !right.getTag().equals("address_of_identifier"))
+							{
+								//array
+								if((int)d.getAttribute("Array Size")>0)
+								{
+									add(c, new DebugBytecode(Kinds.debugBytecodeGetArray,(int)left.getAttribute("Array Size"),symbol));
+								}
+								else
+								{
+									add(c, new DebugBytecode(Kinds.vload,0,symbol));
+								}
+							}
+						}
+					}
+				}
+				//else if(other cases)... TODO
+				currentEnv++;
+			}
+			//check the main function : return int and no parameter
+		});
 	}
 	
 	/**
@@ -587,7 +675,7 @@ public class Aer {
 		//test the type
 		
 		// first, if the code is bad, we assume it is good
-		// just check the type and not other checking?
+		// just check the type and not other checking? - no, the left to be runtime error
 		
 		if(isBad(c1)&&isBad(c2))
 		{
@@ -604,12 +692,61 @@ public class Aer {
 			return;
 		}
 		
-		if(a.getTag().equals("add"))
-		{
-			
-			add(a,new DebugBytecode(Kinds.add));
+		String dataType = getDataType(c1);
+		
+		if(dataType.equals("int")) {
+			if(a.getTag().equals("add"))
+			{				
+				add(a,new DebugBytecode(Kinds.iadd));
+			}
+			else if(a.getTag().equals("sub"))
+			{
+				add(a,new DebugBytecode(Kinds.isub));
+			}
+			else if(a.getTag().equals("mul"))
+			{
+				add(a,new DebugBytecode(Kinds.imul));
+			}
+			else if(a.getTag().equals("div"))
+			{
+				add(a,new DebugBytecode(Kinds.idiv));
+			}
+			else
+			{
+				System.out.println("in AExpression Error");
+			}
 		}
+		else if(dataType.equals("real"))
+		{
+			if(a.getTag().equals("add"))
+			{				
+				add(a,new DebugBytecode(Kinds.fadd));
+			}
+			else if(a.getTag().equals("sub"))
+			{
+				add(a,new DebugBytecode(Kinds.fsub));
+			}
+			else if(a.getTag().equals("mul"))
+			{
+				add(a,new DebugBytecode(Kinds.fmul));
+			}
+			else if(a.getTag().equals("div"))
+			{
+				add(a,new DebugBytecode(Kinds.fdiv));
+			}
+			else
+			{
+				System.out.println("in AExpression Error");
+			}
+		}
+		else
+		{
+			System.out.println("in AExpression Error");
+		}
+		
 	}
+	
+	
 	
 	/**
 	 * @param a, knowing which node we put code to
@@ -644,6 +781,25 @@ public class Aer {
 		}
 	}
 	
+	private void AReadAndWrite(ANode a)
+	{
+		
+	}
+	
+	private void AIfElse(ANode a)
+	{
+		
+	}
+	
+	private void AWhile(ANode a)
+	{
+		
+	}
+	
+	private void Axxx(ANode a)
+	{
+		
+	}
 	
 	/**
 	 * @param symbol
@@ -677,7 +833,12 @@ public class Aer {
 		return a.getTag().equals("Bad Node");
 	}
 	
-	
+	private String getSymbolFromLeftValue(ANode a)
+	{
+		ArrayList<Object> contents = (ArrayList<Object>) a.getContents();
+		String symbol = (String) contents.get(1);
+		return symbol;
+	}
 	
 	
 }

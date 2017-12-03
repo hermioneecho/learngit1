@@ -19,6 +19,12 @@ public class DebugBytecode /*extends Bytecode*/{
 		this.symbol = null;
 	}
 	
+	public DebugBytecode(Kinds kind)
+	{
+		this.bytecode = new Bytecode(kind);
+		this.symbol = null;
+	}
+	
 	public DebugBytecode(Kinds kind, int op, String symbol) {
 		this.bytecode = new Bytecode(kind,op);
 		this.symbol = symbol;

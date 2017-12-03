@@ -36,13 +36,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.undo.UndoManager;
 
-<<<<<<< HEAD
 import core.Lexer;
 import core.Syntaxer;
 import dataStructure.DFA;
-=======
 import dataStructure.ANode;
->>>>>>> c82a5d1449fe53d8b3880b9910090dca69aa93e0
 import dataStructure.SNode;
 
 import java.awt.Color;
@@ -347,8 +344,7 @@ public class Demo extends JFrame {
 		});
 	}
 	
-<<<<<<< HEAD
-=======
+
 	public void show(ANode root) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
@@ -362,7 +358,6 @@ public class Demo extends JFrame {
 		});
 	}
 
->>>>>>> c82a5d1449fe53d8b3880b9910090dca69aa93e0
 	/**
 	 * Create the frame.
 	 */
@@ -689,9 +684,6 @@ public class Demo extends JFrame {
 	            }
 	        });
 	}
-<<<<<<< HEAD
-
-=======
 	
 	public Demo(ANode root) {
 		/**
@@ -723,5 +715,4 @@ public class Demo extends JFrame {
 
 	}
    
->>>>>>> c82a5d1449fe53d8b3880b9910090dca69aa93e0
 }
