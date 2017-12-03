@@ -33,10 +33,12 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
-					aer = new Aer(syntaxer.getRoot());
-					aer.fillAST();
-					Demo result = new Demo(aer.getRoot());
-					result.show(aer.getRoot());
+//					aer = new Aer(syntaxer.getRoot());
+//					aer.fillAST();
+//					Demo result = new Demo(aer.getRoot());
+//					result.show(aer.getRoot());
+					Demo result = new Demo(syntaxer.getRoot());
+					result.show(syntaxer.getRoot());
 				}
 				else
 				{
@@ -56,10 +58,13 @@ public class Interpreter extends Info{
 				syntaxer = new Syntaxer(lexer);
 				if(syntaxer.check())
 				{
-					aer = new Aer(syntaxer.getRoot());
-					aer.fillAST();
-					Demo result = new Demo(aer.getRoot());
-					result.show(aer.getRoot());
+//					aer = new Aer(syntaxer.getRoot());
+//					aer.fillAST();
+//					Demo result = new Demo(aer.getRoot());
+//					result.show(aer.getRoot());
+					
+					Demo result = new Demo(syntaxer.getRoot());
+					result.show(syntaxer.getRoot());
 				}
 				else
 				{

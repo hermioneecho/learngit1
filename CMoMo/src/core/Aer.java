@@ -11,15 +11,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import bytecode.DebugBytecode;
 import cvm.DebugInfo;
 import dataStructure.ANode;
 import dataStructure.SNode;
-
+import bytecode.Kinds;
 /**
  * @author daos
- * Aer is A-er, is ANode-er, who deal with ANode and do such things:
- * @ Fulfill the attribute of the ANode Tree(Attribute Tree)
- * @ detect semantics errors
+ * Aer is A-er, is ANode-er, who deal with ANode and do such A things:
+ * @ ANode Tree(Attribute Tree) fulfillment
+ * @ Arise semantics errors
+ * @ Assembly
  */
 public class Aer {
 	
@@ -56,6 +58,7 @@ public class Aer {
 	 */
 	private static ANode A;
 	
+	private static DebugInfo out;
 	
 	/**
 	 * @param id
@@ -76,6 +79,11 @@ public class Aer {
 		if(result.getTag().equals("Bad Node"))
 			return null;
 		return result;
+	}
+	
+	private boolean isLocal(String symbol)
+	{
+		return localEnvs.get(currentEnv).get(symbol)!=null;
 	}
 	
 	/**
@@ -450,8 +458,48 @@ public class Aer {
 	 * 6. xxx, with a stack operation, just generate it 
 	 */
 	
-	private DebugInfo Compile(){
+	private DebugInfo Assembly(){
 		return null;
 	}
+	
+	/**
+	 * @param a expression_unit node
+	 * @return a stack operation bytecode with debug information
+	 */
+	
+	private void addToDebugBytecode(DebugBytecode dbc)
+	{
+		
+	}
+	
+	/////stop here
+	private DebugBytecode AUnit(ANode a)
+	{
+		if(a.getTag().equals("integer_literal"))
+		{
+			return new DebugBytecode(Kinds.push,(int)a.getContents());
+		}
+		else if(a.getTag().equals("real_literal"))
+		{
+			floats.add((double)a.getContents());
+			return new DebugBytecode(Kinds.fpush,floats.size()-1);
+		}
+		else if(a.getTag().equals("function_call"))
+		{
+			return new DebugBytecode(Kinds.invoke,(String)a.getChildAt(0).getContents());
+		}
+		else if(a.getTag().equals("left_value"))
+		{
+			return new DebugBytecode(Kinds.push,(int)a.getContents());
+		}
+		else if(a.getTag().equals("address_of_identifier"))
+		{
+			return new DebugBytecode(Kinds.push,(int)a.getContents());
+		}
+		else
+			return null;
+	}
+	
+	
 	
 }
