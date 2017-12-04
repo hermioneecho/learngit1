@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import bytecode.DebugBytecode;
 import cvm.DebugInfo;
@@ -47,13 +49,13 @@ public class Aer {
 	 */
 	private static int currentEnv;
 	
-	private static List<String> strings;
+	private static Set<String> strings;
 	
 	/**
 	 * @ the name should be doubles but historically it is float that is to be put into the stack.
 	 * @ an ArrayList for the real_literal
 	 */
-	private static List<Double> floats;
+	private static Set<Double> floats;
 	
 	/**
 	 * root of ANode tree
@@ -104,8 +106,8 @@ public class Aer {
 		out = new DebugInfo(this);
 		globalEnv = new HashMap<String,ANode>();
 		localEnvs = new ArrayList<HashMap<String,ANode>>();
-		strings = new ArrayList<String>();
-		floats = new ArrayList<Double>();
+		strings = new TreeSet<String>();
+		floats = new TreeSet<Double>();
 		functionNames = new ArrayList<String>();
 		
 		//add the main fuction
@@ -220,6 +222,34 @@ public class Aer {
 	private static String getSymbolFromMkid(ANode id)
 	{
 		return (String)((Token)id.getContents()).getWord();
+	}
+	
+	/**
+	 * @param id, a ANode that comes from mkid in syntaxer
+	 * @return
+	 */
+	private ANode getDefinitionOfID(ANode id)
+	{
+		return getVariable(getSymbolFromMkid(id));
+	}
+	
+	/**
+	 * @param id, the definition of the identifier in the environment
+	 * @return
+	 * use for id only
+	 */
+	private static boolean isPointer(ANode id)
+	{
+		return (boolean)id.getAttribute("Pointer");
+	}
+	/**
+	 * @param id
+	 * @return
+	 * use for id only
+	 */
+	private static boolean isArray(ANode id)
+	{
+		return (int)id.getAttribute("Array Size") > 0;
 	}
 	
 	private String AFunctionDeclaration(ANode a)
@@ -506,6 +536,7 @@ public class Aer {
 						ADeclaration(left);
 						ANode d = getVariable(symbol);
 						ANode right = c.getChildAt(1);
+						//deal with the right value first, the value is pushed to the stack
 						AExpression(right);
 						
 						//check left
@@ -543,6 +574,60 @@ public class Aer {
 							}
 						}
 					}
+					else if(c.getTag().equals("read")||c.getTag().equals("write"))
+					{
+						symbol = getSymbolFromMkid(c);
+						ANode id = getVariable(symbol);
+						if(id==null)
+						{
+							c.goodNodeComeBad("Unexisted Symbol");
+							return;
+						}
+						if(isPointer(id)||isArray(id))
+						{
+							c.goodNodeComeBad("Unmatched Symbol");
+							return;
+						}
+						String dataType = getDataType(id);
+						if(c.getTag().equals("read"))
+						{
+							if(dataType.equals("int"))
+								add(c, new DebugBytecode(Kinds.iread));
+							else if(dataType.equals("real"))
+								add(c, new DebugBytecode(Kinds.fread));
+							add(c, new DebugBytecode(Kinds.vload,0, symbol));
+						}
+						else
+						{
+							add(c, new DebugBytecode(Kinds.push,0, symbol));
+							if(dataType.equals("int"))
+								add(c, new DebugBytecode(Kinds.iwrite));
+							else if(dataType.equals("real"))
+								add(c, new DebugBytecode(Kinds.fwrite));
+						}
+					}
+					else if(c.getTag().equals("write_stirng)"))
+					{
+						String string_lteral = (String)c.getChildAt(0).getContents();
+						strings.add(string_lteral);
+						add(c,new DebugBytecode(Kinds.debugBytecodePushString,0,string_lteral));
+						add(c,new DebugBytecode(Kinds.swrite));
+					}
+					else if(c.getTag().equals("xxx"))
+					{
+						int aLine = (int)c.getChildAt(0).getContents();
+						int codeNo = (int)c.getChildAt(1).getContents();
+						int op = (int)c.getChildAt(2).getContents();
+						add(c,new DebugBytecode(Kinds.push,aLine));
+						add(c,new DebugBytecode(Kinds.push,codeNo));
+						add(c,new DebugBytecode(Kinds.push,op));
+						add(c,new DebugBytecode(Kinds.xxx));
+					}
+					else if(c.getTag().equals("return_node"))
+					{
+						this.AExpression(c.getChildAt(0));
+						add(c, new DebugBytecode(Kinds.rtn));
+					}
 					else if(c.getTag().equals("if_node"))
 					{
 						
@@ -552,26 +637,6 @@ public class Aer {
 						
 		    		}
 					else if(c.getTag().equals("while_node"))
-					{
-						
-					}
-					else if(c.getTag().equals("write"))
-					{
-						
-					}
-					else if(c.getTag().equals("write_stirng)"))
-					{
-						
-					}
-					else if(c.getTag().equals("read"))
-					{
-						
-					}
-					else if(c.getTag().equals("xxx"))
-					{
-						
-					}
-					else if(c.getTag().equals("return_node"))
 					{
 						
 					}
@@ -609,7 +674,7 @@ public class Aer {
 		{
 			addDataType(a, "real");
 			floats.add((double)a.getContents());
-			add(a,new DebugBytecode(Kinds.fpush,floats.size()-1));
+			add(a,new DebugBytecode(Kinds.debugBytecodePushFloat,0,((Double)a.getContents()).toString()));
 		}
 		else if(a.getTag().equals("function_call"))
 		{
