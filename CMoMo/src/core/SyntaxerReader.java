@@ -18,6 +18,9 @@ public class SyntaxerReader{
 	// the line number
 	private int line;
 	
+	private int maxLine;
+	private int maxCur;
+	
 	public SyntaxerReader(Lexer lexer) {
 		super();
 		this.cur = 0;
@@ -30,6 +33,8 @@ public class SyntaxerReader{
     		tokens.add(lexer.next());
     	}
 		this.count = tokens.size();
+		maxLine = 0;
+		maxCur = 0;
 	}
 	
 	public ArrayList<Token> getTokens(){
@@ -50,11 +55,15 @@ public class SyntaxerReader{
 		while(this.hasNext() && Info.is(tokens.get(cur),"new_line"))
 		{
 			line = Integer.parseInt(tokens.get(cur).getWord());
+			if(line>maxLine)
+				maxLine = line;
 			cur++;
 		}
 		
 		if(this.hasNext())
 		{
+			if(cur+1>maxCur)
+				maxCur = cur+1;
 			return tokens.get(cur++);
 		}
 		return null;
@@ -95,6 +104,16 @@ public class SyntaxerReader{
 	public int getLine()
 	{
 		return line;
+	}
+	
+	public int getErrorLine()
+	{
+		return maxLine;
+	}
+	
+	public Token getErrorToken()
+	{
+		return tokens.get(maxCur);
 	}
 }
 

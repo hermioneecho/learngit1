@@ -83,13 +83,19 @@ public class CVM {
 	public void normalRun()
 	{
 		Bytecode code = cpu.nextCode();
-		while(code!=null)
-		{
+		try {
+			while(code!=null)
+			{
+				cpu.printStack();
+				cpu.execute(code);
+				code = cpu.nextCode();
+			}
 			cpu.printStack();
-			cpu.execute(code);
-			code = cpu.nextCode();
 		}
-		cpu.printStack();
+		catch(Exception e)
+		{
+			System.out.println("the Bytecode at "+cpu.getPc()+" in the Method Area cause a runtime error!");
+		}
 
 	}
 	
