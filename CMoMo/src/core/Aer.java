@@ -467,7 +467,7 @@ public class Aer {
 	 * 6. xxx, with a stack operation, just generate it 
 	 */
 	
-	private void Assembly(){
+	private boolean Assembly(){
 		globalEnv.forEach((string,anode)->
 		{
 			if(anode.getTag().equals("function_definition"))
@@ -543,12 +543,51 @@ public class Aer {
 							}
 						}
 					}
+					else if(c.getTag().equals("if_node"))
+					{
+						
+					}
+					else if(c.getTag().equals("if_else_node"))
+					{
+						
+		    		}
+					else if(c.getTag().equals("while_node"))
+					{
+						
+					}
+					else if(c.getTag().equals("write"))
+					{
+						
+					}
+					else if(c.getTag().equals("write_stirng)"))
+					{
+						
+					}
+					else if(c.getTag().equals("read"))
+					{
+						
+					}
+					else if(c.getTag().equals("xxx"))
+					{
+						
+					}
+					else if(c.getTag().equals("return_node"))
+					{
+						
+					}
+					else
+					{
+						System.out.println("missing or mistaking cases in Assembly()");
+					}
+
 				}
-				//else if(other cases)... TODO
+				
 				currentEnv++;
 			}
-			//check the main function : return int and no parameter
+
 		});
+		//TODO check the main function : return int and no parameter
+		return !ANode.illegalNode.isEmpty();
 	}
 	
 	/**
@@ -786,14 +825,19 @@ public class Aer {
 		
 	}
 	
-	private void AIfElse(ANode a)
+	private int AIf(ANode a)
 	{
-		
+		return 0;
 	}
 	
-	private void AWhile(ANode a)
+	private int AElse(ANode a)
 	{
-		
+		return 0;
+	}
+	
+	private int AWhile(ANode a)
+	{
+		return 0;
 	}
 	
 	private void Axxx(ANode a)

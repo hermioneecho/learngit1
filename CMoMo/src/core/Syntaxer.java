@@ -101,6 +101,7 @@ public class Syntaxer extends Info{
 		    {
 		    	continue;
 		    }
+		    System.out.println("Syntax Error may be at line " + stxr.getErrorLine() + ", the word \""+stxr.getErrorToken().getWord()+"\"");
 		    return null;
 		}
 		

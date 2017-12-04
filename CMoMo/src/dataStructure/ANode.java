@@ -26,7 +26,7 @@ public class ANode extends DefaultMutableTreeNode{
 	
 	private int lineNo;
 	
-	private static List<ANode> illegalNode = new ArrayList<ANode>();
+	public static List<ANode> illegalNode = new ArrayList<ANode>();
 
 	
 	/**
