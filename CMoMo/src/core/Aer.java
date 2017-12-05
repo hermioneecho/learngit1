@@ -175,7 +175,6 @@ public class Aer {
 	 */
 	private boolean setGlobalEnv()
 	{
-		currentEnv = -1;
 		Enumeration<ANode> round = A.children();
 		ANode tmp = null;
 		currentEnv = 0;
@@ -201,6 +200,8 @@ public class Aer {
 			}
 			else
 			{
+				int oldEnv = currentEnv;
+				currentEnv = -1;
 				if(tmp.getTag().equals("declaration"))
 				{
 					symbol = this.ADeclaration(tmp);
@@ -213,6 +214,7 @@ public class Aer {
 				}
 				else
 				{
+					
 					//definition, needs more attentions
 					symbol = this.ADefinition(tmp);
 					if(symbol == null)
@@ -222,6 +224,7 @@ public class Aer {
 						variableCount++;
 					}
 				}
+				currentEnv=oldEnv;
 			}
 		}
 		
@@ -273,6 +276,8 @@ public class Aer {
 	
 	private String AFunctionDeclaration(ANode a)
 	{
+		localEnvs.add(new HashMap<String,ANode>());
+		
 		ANode dt = a.getChildAt(0);
 		ANode id = a.getChildAt(1);
 		ANode pl = a.getChildAt(2);

@@ -33,19 +33,18 @@ public class Interpreter extends Info{
 				if(syntaxer.check())
 				{
 
-				TestDemo result = new TestDemo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
+				TestDemo result = new TestDemo(syntaxer.getRoot());
 				result.setBounds(60, 0, 1240, 742);
 				result.setResizable(true);
 				result.setVisible(true);
 				result.show(syntaxer.getRoot());
 
-//					aer = new Aer(syntaxer.getRoot());
-//					aer.fillAST();
-//					Demo result = new Demo(aer.getRoot());
-//					result.show(aer.getRoot());
+					aer = new Aer(syntaxer.getRoot());
+					aer.fillAST();
+					TestDemo testDemo = new TestDemo(aer.getRoot());
+					testDemo.show(aer.getRoot());
 				
-//					Demo result = new Demo(syntaxer.getRoot());
-//					result.show(syntaxer.getRoot());
+
 
 				}
 				else
@@ -67,16 +66,16 @@ public class Interpreter extends Info{
 				if(syntaxer.check())
 				{
 
-				TestDemo result = new TestDemo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
+				TestDemo result = new TestDemo(syntaxer.getRoot());
 				result.setBounds(60, 0, 1240, 742);
 				result.setResizable(true);
 				result.setVisible(true);
 				result.show(syntaxer.getRoot());
 
-//					aer = new Aer(syntaxer.getRoot());
-//					aer.fillAST();
-//					Demo result = new Demo(aer.getRoot());
-//					result.show(aer.getRoot());
+					aer = new Aer(syntaxer.getRoot());
+					aer.fillAST();
+					TestDemo testDemo = new TestDemo(aer.getRoot());
+					testDemo.show(aer.getRoot());
 					
 //					Demo result = new Demo(syntaxer.getRoot());
 //					result.show(syntaxer.getRoot());
