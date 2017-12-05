@@ -360,20 +360,23 @@ public class CPU {
 		});
 		FunctionalCircuits.set(Kinds.vload.ordinal(), (op)->
 		{
-			stackArea.push(stackArea.getValue(vars+op));
+			if(op>0)
+			    stackArea.push(stackArea.getValue(vars+op));
+			else
+				stackArea.push(pool.getGlobalVariable(op));
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.vstore.ordinal(), (op)->
 		{
-			stackArea.setValue(vars+op, stackArea.pop());;
+			if(op>0)
+			    stackArea.setValue(vars+op, stackArea.pop());
+			else
+				pool.getGlobalVariable(0-op);
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.aload.ordinal(), (op)->
 		{
-			if(op>0)
-				stackArea.push(stackArea.getValue(op));
-			else
-				stackArea.push(pool.getGlobalVariable(op));
+			stackArea.push(stackArea.getValue(op));
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.astore.ordinal(), (op)->
