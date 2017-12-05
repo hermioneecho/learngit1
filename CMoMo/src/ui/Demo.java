@@ -335,7 +335,7 @@ public class Demo extends JFrame {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					Demo frame = new Demo(root,"CMM½âÊÍÆ÷");
+					TestDemo frame = new TestDemo(root,"CMM½âÊÍÆ÷");
 					frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();

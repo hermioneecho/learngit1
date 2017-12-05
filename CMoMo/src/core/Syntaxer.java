@@ -233,10 +233,11 @@ public class Syntaxer extends Info{
 		SNode statement = null;
 		SNode result = null;
 		
-		int line = stxr.getLine();
+		int line = 0;
 				
 		if((statement=Statement())!=null)
 		{
+			line = stxr.getLine();//to ensure the line in the body is the first line
 			//syntax direct
 			result = new SNode("body",null,line);
 			result.add(statement);

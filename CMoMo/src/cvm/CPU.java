@@ -296,6 +296,24 @@ public class CPU {
 			else
 				pc+=op;
 		});	
+		FunctionalCircuits.set(Kinds.icmpi.ordinal(), (op)->
+		{
+			int op2 = (int) stackArea.pop();
+			int op1 = (int) stackArea.pop();
+			if(op1 != op2)
+				pc++;
+			else
+				pc+=op;
+		});	
+		FunctionalCircuits.set(Kinds.fcmpi.ordinal(), (op)->
+		{
+			double op2 = (double) stackArea.pop();
+			double op1 = (double) stackArea.pop();
+			if(op1 != op2)
+				pc++;
+			else
+				pc+=op;
+		});	
 		FunctionalCircuits.set(Kinds.invoke.ordinal(), (index)->
 		{
 			ArrayList<Object> params = new ArrayList<Object>();

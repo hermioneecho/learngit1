@@ -1,6 +1,7 @@
 package cvm;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 import bytecode.Bytecode;
 import bytecode.DebugBytecode;
 import core.Aer;
+import dataStructure.ANode;
 
 public class DebugInfo{
 	/*contains the debug bytecode, which:
@@ -39,6 +41,7 @@ public class DebugInfo{
 	 * */
 	
 	private Map<Integer/*the line number*/, ArrayList<DebugBytecode>> debugCodes;
+	private Map<ANode,Integer> codeNum;
 	
 	/**
 	 * the index is function index, and beginLine.get(index) return the line 
@@ -59,6 +62,7 @@ public class DebugInfo{
 		debugCodes = new HashMap<Integer, ArrayList<DebugBytecode>>();
 		beginLine = new ArrayList<Integer>();
 		endLine = new ArrayList<Integer>();
+		codeNum = new HashMap<ANode, Integer>();
 	}
 	
 	public ArrayList<DebugBytecode> getCodes(int lineNo)
@@ -71,6 +75,24 @@ public class DebugInfo{
 		}
 		return result;
 	}
+	
+	public void setCodeCount(ANode a)
+	{
+		if(codeNum.containsKey(a))
+		{
+		    codeNum.put(a, codeNum.get(a)+1);
+		}
+		else 
+			codeNum.put(a, 1);
+	}
+	
+	public int getCodeCount(ANode a)
+	{
+		if(codeNum.containsKey(a))
+			return codeNum.get(a);
+		else
+			return 0;
+	}
 
 	public void pushCode(int lineNo, DebugBytecode dbc)
 	{
@@ -80,6 +102,25 @@ public class DebugInfo{
 	public void setOp(int lineNo, int dbcNo, int newOp)
 	{
 		getCodes(lineNo).get(dbcNo).setAddress(newOp);
+	}
+	
+	public int countCodes(ANode root)
+	{
+		// every debugBytecode(includeing DebugCodeGetAddress..) will be replace by one and only one bytecode
+		// thus count the debugBytecode is to count the bytecode
+		return getCodeCount(root) + getCodesCount(root.children());
+	}
+
+	private int getCodesCount(Enumeration children) {
+		// TODO Auto-generated method stub
+		ANode c;
+		int count = 0;
+		while(children.hasMoreElements())
+		{
+			c=(ANode) children.nextElement();
+			count += getCodeCount(c);
+		}
+		return count;
 	}
 
 	
