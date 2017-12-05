@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import bytecode.DebugBytecode;
 import cvm.DebugInfo;
@@ -47,13 +49,13 @@ public class Aer {
 	 */
 	private static int currentEnv;
 	
-	private static List<String> strings;
+	private static Set<String> strings;
 	
 	/**
 	 * @ the name should be doubles but historically it is float that is to be put into the stack.
 	 * @ an ArrayList for the real_literal
 	 */
-	private static List<Double> floats;
+	private static Set<Double> floats;
 	
 	/**
 	 * root of ANode tree
@@ -90,7 +92,7 @@ public class Aer {
 	
 	/**
 	 * @param rnode
-	 * @return anode being referenced by rnode(rnode is a "left_value", with the same identifier)
+	 * @return anode being referenced by "left_value", with the same identifier
 	 */
 	private ANode getVariableByNode(ANode rnode)
 	{
@@ -104,8 +106,8 @@ public class Aer {
 		out = new DebugInfo(this);
 		globalEnv = new HashMap<String,ANode>();
 		localEnvs = new ArrayList<HashMap<String,ANode>>();
-		strings = new ArrayList<String>();
-		floats = new ArrayList<Double>();
+		strings = new TreeSet<String>();
+		floats = new TreeSet<Double>();
 		functionNames = new ArrayList<String>();
 		
 		//add the main fuction
@@ -156,6 +158,17 @@ public class Aer {
 		return false;
 	}
 	
+	private static boolean addToLocal(String symbol,ANode node)
+	{
+		if(!localEnvs.get(currentEnv).containsKey(symbol))
+		{
+			localEnvs.get(currentEnv).put(symbol, node);
+			return true;
+		}
+		node.goodNodeComeBad("the symbol(identifier) already exist!");
+		return false;
+	}
+	
 	/**
 	 * @return success or not
 	 * what is environment is explained in the declaration of globalEnv
@@ -165,6 +178,7 @@ public class Aer {
 		currentEnv = -1;
 		Enumeration<ANode> round = A.children();
 		ANode tmp = null;
+		currentEnv = 0;
 		int variableCount = 0;
 		int functionCount = 0;
 		String symbol = null;
@@ -177,9 +191,12 @@ public class Aer {
 				symbol = this.AFunctionDeclaration(tmp);
 				if(symbol == null)
 					return false;
+				// so add a isFunction()
 				if(addToGlobal(symbol, tmp))
 				{
 					functionCount++;
+					functionNames.add(symbol);
+					currentEnv++;
 				}
 			}
 			else
@@ -222,6 +239,38 @@ public class Aer {
 		return (String)((Token)id.getContents()).getWord();
 	}
 	
+	/**
+	 * @param id, a ANode that comes from mkid in syntaxer
+	 * @return
+	 */
+	private ANode getDefinitionOfID(ANode id)
+	{
+		return getVariable(getSymbolFromMkid(id));
+	}
+	
+	/**
+	 * @param id, the definition of the identifier in the environment
+	 * @return
+	 * use for id only
+	 */
+	private static boolean isPointer(ANode id)
+	{
+		return (boolean)id.getAttribute("Pointer");
+	}
+	/**
+	 * @param id
+	 * @return
+	 * use for id only
+	 */
+	private static boolean isArray(ANode id)
+	{
+		return (int)id.getAttribute("Array Size") > 0;
+	}
+	private static boolean isFunction(ANode id)
+	{
+		return id.getAttribute("Parameter Symbol") != null;
+	}
+	
 	private String AFunctionDeclaration(ANode a)
 	{
 		ANode dt = a.getChildAt(0);
@@ -246,6 +295,13 @@ public class Aer {
 			prID = (String) getSymbolFromMkid(pr.getChildAt(1));
 			prSymbols.add(prID);
 			prTypes.add(prDT);
+			pr.addAttribute("Data Type", prDT);
+			pr.addAttribute("Symbol", prID);
+			pr.addAttribute("Pointer", false);
+			pr.addAttribute("Array Size", 0);
+			if(!addToLocal(prID,pr))
+				;//seems no need to handle here because it would be unexisted node if we use the parameter
+			
 		}
 		a.addAttribute("Parameter Types", prTypes);
 		a.addAttribute("Parameter Symbols", prSymbols);
@@ -253,6 +309,10 @@ public class Aer {
 		return getSymbolFromMkid(id);
 	}
 	
+	private boolean isUsedSymbol(String symbol)
+	{
+		return getVariable(symbol)!=null;
+	}
 	
 	private String ADeclaration(ANode a)
 	{
@@ -282,6 +342,7 @@ public class Aer {
 	 */
 	private String ADefinition(ANode a)
 	{
+		//it would work well at the first two children, symbol is not null
 		String symbol = this.ADeclaration(a);
 		ANode rightValue = a.getChildAt(2);
 		int arraysize = 0;
@@ -330,8 +391,7 @@ public class Aer {
 					a.addAttribute("Array Values",valueArray);
 				return symbol;
 			}
-		}
-			
+		}			
 		//is pointer?
 		// &array[1] is forbidden
 		else if((boolean)a.getAttribute("Pointer"))
@@ -352,7 +412,7 @@ public class Aer {
 				ANode id = getVariableByNode(rightValue);	
 				if(id!=null)
 				{
-					a.goodNodeComeBad("use unexist symbol(identifier");
+					a.goodNodeComeBad("use unexist symbol(identifier)");
 					return null;
 				}
 				if(compare(id,a,"Data Type") && (boolean)id.getAttribute("Pointer"))
@@ -468,120 +528,21 @@ public class Aer {
 	 */
 	
 	private boolean Assembly(){
+		currentEnv = 0;
 		globalEnv.forEach((string,anode)->
 		{
 			if(anode.getTag().equals("function_definition"))
 			{
+				//the parameter is added to LocalEnv in AFunction definition
+				//the function name is added in SetGlobal
 				Enumeration<ANode> e = anode.children();
 				ANode c;
-				String symbol;
-				currentEnv = 1; //currentEnv == 0 if the function is main()
+
 				while(e.hasMoreElements())
 				{
-					/*
-					 * add the name to function name
-					 * 
-					 */
-					if((c=e.nextElement()).getTag().equals("declaration"))
-					{
-						// if null, the code is set as bad automatically
-						if((symbol = this.ADeclaration(c))!=null)
-						{
-							localEnvs.get(currentEnv).put(symbol, c);
-						}
-						
-					}
-					else if(c.getTag().equals("definition"))
-					{
-						// if null, the code is set as bad automatically
-						if((symbol = this.ADeclaration(c))!=null)
-						{
-							localEnvs.get(currentEnv).put(symbol, c);
-						}					
-					}
-					else if(c.getTag().equals("assignment"))
-					{
-						ANode left = c.getChildAt(0);
-						symbol=getSymbolFromLeftValue(left);
-						ADeclaration(left);
-						ANode d = getVariable(symbol);
-						ANode right = c.getChildAt(1);
-						AExpression(right);
-						
-						//check left
-						if(d == null)
-						{
-							c.goodNodeComeBad("Unexisted Symbol");
-							return;
-						}
-						
-						//check right
-						if(isBad(right))
-						{
-							c.goodNodeComeBad("Illegal Expression");
-							return;
-						}
-						
-						//check type
-						if(compare(d,right,"Data Type"))
-						{
-							//pointer
-							if((boolean)d.getAttribute("Pointer") == true && right.getTag().equals("address_of_identifier"))
-								add(c, new DebugBytecode(Kinds.vload,0,symbol));
-							//value
-							if((boolean)d.getAttribute("Pointer") == false && !right.getTag().equals("address_of_identifier"))
-							{
-								//array
-								if((int)d.getAttribute("Array Size")>0)
-								{
-									add(c, new DebugBytecode(Kinds.debugBytecodeGetArray,(int)left.getAttribute("Array Size"),symbol));
-								}
-								else
-								{
-									add(c, new DebugBytecode(Kinds.vload,0,symbol));
-								}
-							}
-						}
-					}
-					else if(c.getTag().equals("if_node"))
-					{
-						
-					}
-					else if(c.getTag().equals("if_else_node"))
-					{
-						
-		    		}
-					else if(c.getTag().equals("while_node"))
-					{
-						
-					}
-					else if(c.getTag().equals("write"))
-					{
-						
-					}
-					else if(c.getTag().equals("write_stirng)"))
-					{
-						
-					}
-					else if(c.getTag().equals("read"))
-					{
-						
-					}
-					else if(c.getTag().equals("xxx"))
-					{
-						
-					}
-					else if(c.getTag().equals("return_node"))
-					{
-						
-					}
-					else
-					{
-						System.out.println("missing or mistaking cases in Assembly()");
-					}
-
-				}
-				
+					c=e.nextElement();
+					AStatement(c);
+				}				
 				currentEnv++;
 			}
 
@@ -590,15 +551,198 @@ public class Aer {
 		return !ANode.illegalNode.isEmpty();
 	}
 	
-	/**
-	 * @param a expression_unit node
-	 * @return a stack operation bytecode with debug information
-	 */
-	
+    private void AStatement(ANode c)
+    {
+		String symbol;
+    	if(c.getTag().equals("declaration"))
+		{
+			// if null, the code is set as bad automatically
+			if((symbol = this.ADeclaration(c))!=null)
+			{
+				addToLocal(symbol, c);			
+			}
+			
+		}
+		else if(c.getTag().equals("definition"))
+		{
+			// if null, the code is set as bad automatically
+			if((symbol = this.ADefinition(c))!=null)
+			{
+				if(addToLocal(symbol,c))
+				{
+					String dataType = getDataType(symbol);
+					if(dataType.equals("int"))
+					{	
+					    add(c, new DebugBytecode(Kinds.push,(int)c.getAttribute("Initial Value")));
+					}
+					else if(dataType.equals("real"))
+					{
+						double value = (double)c.getAttribute("Initial Value");
+						floats.add(value);
+						add(c,new DebugBytecode(Kinds.fpush,String.valueOf(value)));
+					}
+					add(c, new DebugBytecode(Kinds.vstore,symbol));
+				}
+				
+			}					
+		}
+		else if(c.getTag().equals("assignment"))
+		{
+			ANode left = c.getChildAt(0);
+			symbol=getSymbolFromLeftValue(left);
+			ADeclaration(left);
+			ANode d = getVariable(symbol);
+			ANode right = c.getChildAt(1);
+			//deal with the right value first, the value is pushed to the stack
+			AExpression(right);
+			
+			//check left
+			if(d == null)
+			{
+				c.goodNodeComeBad("Unexisted Symbol");
+				return;
+			}
+			
+			//check right
+			if(isBad(right))
+			{
+				c.goodNodeComeBad("Illegal Expression");
+				return;
+			}
+			
+			//check type
+			if(compare(d,right,"Data Type"))
+			{
+				//pointer
+				if((boolean)d.getAttribute("Pointer") == true && right.getTag().equals("address_of_identifier"))
+					add(c, new DebugBytecode(Kinds.vload,0,symbol));
+				//value
+				if((boolean)d.getAttribute("Pointer") == false && !right.getTag().equals("address_of_identifier"))
+				{
+					//array
+					if((int)d.getAttribute("Array Size")>0)
+					{
+						add(c, new DebugBytecode(Kinds.debugBytecodeGetArray,(int)left.getAttribute("Array Size"),symbol));
+					}
+					else
+					{
+						add(c, new DebugBytecode(Kinds.vload,0,symbol));
+					}
+				}
+			}
+		}
+		else if(c.getTag().equals("read")||c.getTag().equals("write"))
+		{
+			symbol = getSymbolFromMkid(c);
+			ANode id = getVariable(symbol);
+			if(id==null)
+			{
+				c.goodNodeComeBad("Unexisted Symbol");
+				return;
+			}
+			if(isPointer(id)||isArray(id))
+			{
+				c.goodNodeComeBad("Unmatched Symbol");
+				return;
+			}
+			String dataType = getDataType(id);
+			if(c.getTag().equals("read"))
+			{
+				if(dataType.equals("int"))
+					add(c, new DebugBytecode(Kinds.iread));
+				else if(dataType.equals("real"))
+					add(c, new DebugBytecode(Kinds.fread));
+				add(c, new DebugBytecode(Kinds.vload,0, symbol));
+			}
+			else
+			{
+				add(c, new DebugBytecode(Kinds.push,0, symbol));
+				if(dataType.equals("int"))
+					add(c, new DebugBytecode(Kinds.iwrite));
+				else if(dataType.equals("real"))
+					add(c, new DebugBytecode(Kinds.fwrite));
+			}
+		}
+		else if(c.getTag().equals("write_stirng)"))
+		{
+			String string_lteral = (String)c.getChildAt(0).getContents();
+			strings.add(string_lteral);
+			add(c,new DebugBytecode(Kinds.debugBytecodePushString,0,string_lteral));
+			add(c,new DebugBytecode(Kinds.swrite));
+		}
+		else if(c.getTag().equals("xxx"))
+		{
+			int aLine = (int)c.getChildAt(0).getContents();
+			int codeNo = (int)c.getChildAt(1).getContents();
+			int op = (int)c.getChildAt(2).getContents();
+			add(c,new DebugBytecode(Kinds.push,aLine));
+			add(c,new DebugBytecode(Kinds.push,codeNo));
+			add(c,new DebugBytecode(Kinds.push,op));
+			add(c,new DebugBytecode(Kinds.xxx));
+		}
+		else if(c.getTag().equals("return_node"))
+		{
+			this.AExpression(c.getChildAt(0));
+			add(c, new DebugBytecode(Kinds.rtn));
+		}
+		else if(c.getTag().equals("while_node"))
+		{
+			DebugBytecode condDBC = null;
+			ANode cond = c.getChildAt(0);
+			
+			condDBC = ACond(cond);
+			add(c,condDBC);			
+			// cope with the bytecode count:Add a new map in debugInfo
+			ANode body = c.getChildAt(1);
+			AStatement(body);
+			int count = out.countCodes(body);
+			add(c, new DebugBytecode(Kinds.gto,0-count));
+			condDBC.setAddress(count);
+		}
+		else if(c.getTag().equals("if_node"))
+		{
+			DebugBytecode condDBC = null;
+			ANode cond = c.getChildAt(0);
+			
+			condDBC = ACond(cond);
+			add(c,condDBC);			
+			// cope with the bytecode count:Add a new map in debugInfo
+			ANode body = c.getChildAt(1);
+			AStatement(body);
+			int count = out.countCodes(body);
+			condDBC.setAddress(count);
+		}
+		else if(c.getTag().equals("if_else_node"))
+		{
+			DebugBytecode condDBC = null;
+			DebugBytecode ifgoto = new DebugBytecode(Kinds.gto);
+			ANode cond = c.getChildAt(0);
+			
+			condDBC = ACond(cond);
+			add(c,condDBC);			
+			// cope with the bytecode count:Add a new map in debugInfo
+			ANode ifbody = c.getChildAt(1);
+			ANode elsebody = c.getChildAt(2);
+			AStatement(ifbody);
+			int count = out.countCodes(ifbody);
+			add(c,ifgoto);
+			condDBC.setAddress(count+1);
+			AStatement(elsebody);
+			count = out.countCodes(elsebody);
+			ifgoto.setAddress(count);
+		}
+		else
+		{
+			;// the pl and dt would reach here
+		}
 
-	
-	/////stop here
-	private void AUnit(ANode a)
+    }
+
+	/**
+	 * @param a
+	 * @return isUnit
+	 */
+	private boolean AUnit(ANode a)
 	{
 		if(a.getTag().equals("integer_literal"))
 		{
@@ -609,18 +753,26 @@ public class Aer {
 		{
 			addDataType(a, "real");
 			floats.add((double)a.getContents());
-			add(a,new DebugBytecode(Kinds.fpush,floats.size()-1));
+			add(a,new DebugBytecode(Kinds.fpush,0,((Double)a.getContents()).toString()));
 		}
 		else if(a.getTag().equals("function_call"))
 		{
 			//set type
-			String returnType = getDataType(getSymbolFromMkid(a.getChildAt(0)));
-			if(returnType == null)
+			String symbol= getSymbolFromMkid(a.getChildAt(0));
+			String returnType = getDataType(symbol);
+			ANode d = getVariable(symbol);
+			if(d == null)
 			{
 				a.goodNodeComeBad("Unexisted Symbol");
-				return;
+				return true;
+			}
+			if(!isFunction(d))
+			{
+				a.goodNodeComeBad("Unmatch Type");
+				return true;
 			}
 			addDataType(a,returnType);
+			
 			//push the arguments to the stack
 			ANode al = a.getChildAt(1);
 			Enumeration<ANode> ale = al.children();
@@ -643,7 +795,13 @@ public class Aer {
 			if(d==null)
 			{
 				a.goodNodeComeBad("Unexisted Symbol");
-				return;
+				return true;
+			}
+			
+			if(isFunction(d))
+			{
+				a.goodNodeComeBad("Unmatched Type");
+				return true;
 			}
 			a.addAttribute("Data Type", getDataType(d));			
 			
@@ -653,7 +811,7 @@ public class Aer {
 				if((int)d.getAttribute("Array Size")==0)
 				{
 					a.goodNodeComeBad("Unmatched Type");
-					return;
+					return true;
 				}
 				add(a,new DebugBytecode(Kinds.debugBytecodeGetArray,arraysize,(String)symbol));					
 				a.addAttribute("Data Type", "int");
@@ -663,7 +821,7 @@ public class Aer {
 				if((boolean)d.getAttribute("Pointer")==false)
 				{
 					a.goodNodeComeBad("Unmatched Type");
-					return;
+					return true;
 				}
 				add(a,new DebugBytecode(Kinds.aload,symbol));
 			}
@@ -672,14 +830,14 @@ public class Aer {
 				if((boolean)d.getAttribute("Pointer")&&(int)d.getAttribute("Array Size")>0)
 				{
 					a.goodNodeComeBad("Unmatched Type");
-					return;
+					return true;
 				}
 				add(a,new DebugBytecode(Kinds.vload,symbol));
 			}
 			else
 			{
 				a.goodNodeComeBad("Unmatched Type");
-				return;
+				return true;
 			}
 		}
 		else if(a.getTag().equals("address_of_identifier"))
@@ -689,22 +847,77 @@ public class Aer {
 			if(d==null)
 			{
 				a.goodNodeComeBad("Unexisted Symbol");
-				return;
+				return true;
 			}
 			// ensure it is a pure identifier
-			if((boolean)d.getAttribute("Pointer")==true||(int)d.getAttribute("Array Size")>0)
+			if((boolean)d.getAttribute("Pointer")==true||(int)d.getAttribute("Array Size")>0||isFunction(d))
 			{
 				a.goodNodeComeBad("Unmatched Type");
-				return;
+				return true;
 			}
 			add(a,new DebugBytecode(Kinds.debugBytecodeGetAddress,(String)a.getContents()));
+			return true;
 		}
 		else
-			System.out.println("Unit Error");;
+			return false;
+		return true;
+	}
+	
+	/**
+	 * @param a Cond
+	 * @return a DebugBytecode to be modified, and the DebugBytecode has the logical operation in its symbol
+	 */
+	private DebugBytecode ACond(ANode a)
+	{
+		String logicalOp = (String)a.getContents();
+		ANode left = a.getChildAt(0);
+		ANode right = a.getChildAt(1);		
+		AExpression(left);
+		AExpression(right);
+		String leftDataType = (String)left.getAttribute("Data Type");
+		String rightDataType = (String)right.getAttribute("Data Type");
+		String type;
+		
+		if(leftDataType!=null)
+			type = leftDataType;
+		else if(rightDataType!=null)
+			type = rightDataType;
+		else
+		{
+			a.goodNodeComeBad("Unmatched Type");
+			type = "int"; //continue
+		}
+		
+		if(type.equals("int"))
+		{
+			if(logicalOp.equals("=="))
+			    return new DebugBytecode(Kinds.icmp,"==");
+			else if(logicalOp.equals("<>"))
+				return new DebugBytecode(Kinds.icmpi,"<>");
+			else if(logicalOp.equals("<"))
+				return new DebugBytecode(Kinds.icmpg,"<");
+		}
+		else if(type.equals("real"))
+		{
+			if(logicalOp.equals("=="))
+			    return new DebugBytecode(Kinds.fcmp,"==");
+			else if(logicalOp.equals("<>"))
+				return new DebugBytecode(Kinds.fcmpi,"<>");
+			else if(logicalOp.equals("<"))
+				return new DebugBytecode(Kinds.fcmpg,"<");
+		}
+		else
+			return null;
+		return null;
 	}
 	
 	private void AExpression(ANode a)
 	{
+		if(AUnit(a))
+		{	
+			return;
+		}
+		
 		ANode c1 = a.getChildAt(0);
 		ANode c2 = a.getChildAt(1);
 		
@@ -754,6 +967,7 @@ public class Aer {
 			{
 				System.out.println("in AExpression Error");
 			}
+			a.addAttribute("Data Type", "int");
 		}
 		else if(dataType.equals("real"))
 		{
@@ -777,6 +991,7 @@ public class Aer {
 			{
 				System.out.println("in AExpression Error");
 			}
+			a.addAttribute("Data Type", "real");
 		}
 		else
 		{
@@ -794,6 +1009,7 @@ public class Aer {
 	private void add(ANode a,DebugBytecode dbc)
 	{
 		out.pushCode(a.getLineNo(), dbc);
+		out.setCodeCount(a);
 	}
 	
 	private String getAttribute(String symbol, String attribute)

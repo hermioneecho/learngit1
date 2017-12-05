@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Queue;
 
 import dataStructure.*;
-import ui.Demo;
+import ui.TestDemo;
 import core.*;
 
 
@@ -33,7 +33,7 @@ public class Interpreter extends Info{
 				if(syntaxer.check())
 				{
 
-				Demo result = new Demo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
+				TestDemo result = new TestDemo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
 				result.setBounds(60, 0, 1240, 742);
 				result.setResizable(true);
 				result.setVisible(true);
@@ -67,7 +67,7 @@ public class Interpreter extends Info{
 				if(syntaxer.check())
 				{
 
-				Demo result = new Demo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
+				TestDemo result = new TestDemo(syntaxer.getRoot(),"CMM½âÊÍÆ÷");
 				result.setBounds(60, 0, 1240, 742);
 				result.setResizable(true);
 				result.setVisible(true);

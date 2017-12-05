@@ -25,6 +25,8 @@ public enum Kinds {
 			fcmpg,
 			icmp,
 			fcmp,
+			icmpi,
+			fcmpi,
 			//function
 			invoke,
 			rtn,
@@ -38,6 +40,7 @@ public enum Kinds {
 			xxx,
 			// use for debugBytecode only
 			debugBytecodeGetAddress, /*put the address of the symbol to the stack */
-			debugBytecodeGetArray /*the symbol in the DebugBytecode is the name of the array's symbol*/
-			                      /*the op in Bytecode is the index of the array */
+			debugBytecodeGetArray, /*the symbol in the DebugBytecode is the name of the array's symbol*/
+			                       /*the op is the index of the array */
+			debugBytecodePushString
 }
