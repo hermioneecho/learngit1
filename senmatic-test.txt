@@ -1,7 +1,11 @@
+int cheer;
+int *up = &cheer;
+
 int foo(int i, int r)
 {
+int array[3] = {2,4,6};
+array[2] = -1;
 return 1;
 }
 
-real cheer;
-real *up = &cheer;
+

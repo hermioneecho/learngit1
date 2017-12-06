@@ -62,8 +62,8 @@ public class SyntaxerReader{
 		
 		if(this.hasNext())
 		{
-			if(cur+1>maxCur)
-				maxCur = cur+1;
+			if(cur>maxCur)
+				maxCur = cur;
 			return tokens.get(cur++);
 		}
 		return null;
@@ -75,7 +75,10 @@ public class SyntaxerReader{
 		if(cur>0)
 			cur--;
 		while(Info.is(tokens.get(cur),"new_line"))
+		{
 			cur--;
+			line--;
+		}
 	}
 	
 	// get a save-point
@@ -85,9 +88,21 @@ public class SyntaxerReader{
 	}
 	
 	// read a save-point
+	/**
+	 * @param save
+	 * use for roll back (read a save) ONLY!
+	 */
 	public void setCur(int save)
 	{
-		this.cur = save;
+		int lines=0;
+		// the new cur and the old cur cannot be new_line, new_line is in the interval
+		for(int i=save; i<cur; i++)
+		{
+			if(Info.is(tokens.get(i),"new_line"))
+				lines++;
+		}
+		line = line - lines;
+		cur = save;
 	}
 	
 //	public Ssr save()

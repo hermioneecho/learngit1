@@ -122,6 +122,17 @@ public class DebugInfo{
 		}
 		return count;
 	}
+	
+	public void printCodes()
+	{
+		System.out.println("Debug Bytecodes:");
+		debugCodes.forEach(
+				(i,cs)->{
+					System.out.println("at line "+ i +" : ");
+					cs.forEach((c)->{System.out.println(c.toString());});
+				}
+				);
+	}
 
 	
 	
