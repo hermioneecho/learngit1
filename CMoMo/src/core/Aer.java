@@ -135,6 +135,23 @@ public class Aer {
 				result+=cur.getKey()+":"+ cur.getValue().toString()+"\n";
 			}
 			System.out.println(result);
+		if(!Assembly())
+		{
+			System.out.println("Senmatic Error:");	
+			printBadNodes();
+		}
+		else
+		{
+			out.printCodes();
+		}
+	}
+	
+	private void printBadNodes()
+	{
+		for(ANode a : ANode.illegalNode)
+		{
+			System.out.println(a.toString());
+		}
 	}
 	
 	public ANode getRoot()
@@ -239,7 +256,7 @@ public class Aer {
 	 */
 	private static String getSymbolFromMkid(ANode id)
 	{
-		return (String)((Token)id.getContents()).getWord();
+		return (String)((Token)(id.getContents())).getWord();
 	}
 	
 	/**
@@ -553,7 +570,7 @@ public class Aer {
 
 		});
 		//TODO check the main function : return int and no parameter
-		return !ANode.illegalNode.isEmpty();
+		return ANode.illegalNode.isEmpty();
 	}
 	
     private void AStatement(ANode c)
@@ -591,11 +608,11 @@ public class Aer {
 				
 			}					
 		}
-		else if(c.getTag().equals("assignment"))
+		else if(c.getTag().equals("assigment"))
 		{
 			ANode left = c.getChildAt(0);
 			symbol=getSymbolFromLeftValue(left);
-			ADeclaration(left);
+			ALeftValue(left);
 			ANode d = getVariable(symbol);
 			ANode right = c.getChildAt(1);
 			//deal with the right value first, the value is pushed to the stack
@@ -618,9 +635,10 @@ public class Aer {
 			//check type
 			if(compare(d,right,"Data Type"))
 			{
+				c.addAttribute("Data Type", getDataType(d));
 				//pointer
 				if((boolean)d.getAttribute("Pointer") == true && right.getTag().equals("address_of_identifier"))
-					add(c, new DebugBytecode(Kinds.vload,0,symbol));
+					add(c, new DebugBytecode(Kinds.vstore,0,symbol));
 				//value
 				if((boolean)d.getAttribute("Pointer") == false && !right.getTag().equals("address_of_identifier"))
 				{
@@ -631,14 +649,18 @@ public class Aer {
 					}
 					else
 					{
-						add(c, new DebugBytecode(Kinds.vload,0,symbol));
+						add(c, new DebugBytecode(Kinds.vstore,0,symbol));
 					}
 				}
+			}
+			else
+			{
+				c.goodNodeComeBad("Unmatched Type");
 			}
 		}
 		else if(c.getTag().equals("read")||c.getTag().equals("write"))
 		{
-			symbol = getSymbolFromMkid(c);
+			symbol = getSymbolFromMkid(c.getChildAt(0));
 			ANode id = getVariable(symbol);
 			if(id==null)
 			{
@@ -668,7 +690,7 @@ public class Aer {
 					add(c, new DebugBytecode(Kinds.fwrite));
 			}
 		}
-		else if(c.getTag().equals("write_stirng)"))
+		else if(c.getTag().equals("write_string"))
 		{
 			String string_lteral = (String)c.getChildAt(0).getContents();
 			strings.add(string_lteral);
@@ -828,7 +850,7 @@ public class Aer {
 					a.goodNodeComeBad("Unmatched Type");
 					return true;
 				}
-				add(a,new DebugBytecode(Kinds.aload,symbol));
+				add(a,new DebugBytecode(Kinds.vload,symbol));
 			}
 			else if(arraysize==0 && isPointer==false)
 			{
@@ -1059,6 +1081,31 @@ public class Aer {
 	private int AWhile(ANode a)
 	{
 		return 0;
+	}
+	
+	private String ALeftValue(ANode a)
+	{
+		ArrayList<Object> contents = (ArrayList<Object>) a.getContents();
+		boolean isPointer = (boolean) contents.get(0);
+		String ID = (String) contents.get(1);
+		int arraysize = (int) contents.get(2);
+		a.addAttribute("Symbol", ID);
+		String dataType = getDataType(ID);
+		if(dataType == null)
+		{
+			a.goodNodeComeBad("Unexited Symbol");
+			return null;
+		}
+		a.addAttribute("Data Type", dataType);
+		if(!isPointer)
+		    a.addAttribute("Pointer", false);
+		else
+			a.addAttribute("Pointer", true);
+		if(arraysize > 0)
+			a.addAttribute("Array Size", arraysize);
+		else
+			a.addAttribute("Array Size", (int)0);
+		return ID;
 	}
 	
 	private void Axxx(ANode a)

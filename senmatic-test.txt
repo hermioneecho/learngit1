@@ -1,7 +1,15 @@
+int cheer;
+int *up = &cheer;
+
 int foo(int i, int r)
 {
+int x = 2;
+real y;
+read(x);
+i = i/(3+r)-x**up;
+//y=i;
+write("run fast for your father");
 return 1;
 }
 
-real cheer;
-real *up = &cheer;
+
