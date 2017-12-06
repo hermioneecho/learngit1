@@ -363,7 +363,7 @@ public class CPU {
 			if(op>0)
 			    stackArea.push(stackArea.getValue(vars+op));
 			else
-				stackArea.push(pool.getGlobalVariable(op));
+				stackArea.push(pool.getGlobalVariable(0-op));
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.vstore.ordinal(), (op)->
@@ -380,11 +380,8 @@ public class CPU {
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.astore.ordinal(), (op)->
-		{
-			if(op>0)			
+		{			
 				stackArea.setValue(op, stackArea.pop());
-			else
-				pool.setGlobalVariable(op, stackArea.pop());
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.xxx.ordinal(), (op)->
