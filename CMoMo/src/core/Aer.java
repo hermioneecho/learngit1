@@ -592,17 +592,61 @@ public class Aer {
 			{
 				if(addToLocal(symbol,c))
 				{
-					String dataType = getDataType(symbol);
-					if(dataType.equals("int"))
-					{	
-					    add(c, new DebugBytecode(Kinds.push,(int)c.getAttribute("Initial Value")));
-					}
-					else if(dataType.equals("real"))
-					{
-						double value = (double)c.getAttribute("Initial Value");
-						floats.add(value);
-						add(c,new DebugBytecode(Kinds.fpush,String.valueOf(value)));
-					}
+				    if(isPointer(c))
+				    {
+				    	add(c, new DebugBytecode(Kinds.push,(String)c.getAttribute("Point To")));
+				    }
+				    else {
+
+						String dataType = getDataType(symbol);
+						
+						if(dataType.equals("int"))
+						{	if(!isPointer(c)&&!isArray(c))
+						    {
+							    add(c, new DebugBytecode(Kinds.push,(int)c.getAttribute("Initial Value")));
+							}
+						    else if(isArray(c))
+						    {
+						    	ArrayList<Object> values = (ArrayList<Object>)c.getAttribute("Array Values");
+						    	int size = values.size();
+						    	for(Object v:values)
+						    	{
+						    		add(c, new DebugBytecode(Kinds.push,(int)v));
+						    	}
+						    	for(int i=1;i<=size;i++)
+						    	{
+						    		// our stack grows from lower address to high address so the first value is to be store in the heighest address
+						    		// symbol of an array points to the lowest address of the array
+						    		add(c, new DebugBytecode(Kinds.vstore,size-i,symbol));
+						    	}
+						    	return;
+						    }
+						}
+						else if(dataType.equals("real"))
+						{
+							if(!isPointer(c)&&!isArray(c))
+							{
+								double value = (double)c.getAttribute("Initial Value");
+								floats.add(value);
+								add(c,new DebugBytecode(Kinds.fpush,String.valueOf(value)));
+							}
+							else if(isArray(c))
+						    {
+						    	ArrayList<Object> values = (ArrayList<Object>)c.getAttribute("Array Values");
+						    	int size = values.size();
+						    	for(Object v:values)
+						    	{
+						    		floats.add((double)v);
+						    		add(c, new DebugBytecode(Kinds.fpush,String.valueOf((double)v)));
+						    	}
+						    	for(int i=1;i<=size;i++)
+						    	{
+						    		add(c, new DebugBytecode(Kinds.vstore,size-i,symbol));
+						    	}
+						    	return;
+						    }
+						}
+				    }
 					add(c, new DebugBytecode(Kinds.vstore,symbol));
 				}
 				
@@ -632,20 +676,26 @@ public class Aer {
 				return;
 			}
 			
+			if(right.getTag().equals("address_of_identifier"))
+			{
+				
+				right = getVariable((String)right.getContents());
+			}
+			
 			//check type
 			if(compare(d,right,"Data Type"))
 			{
 				c.addAttribute("Data Type", getDataType(d));
 				//pointer
-				if((boolean)d.getAttribute("Pointer") == true && right.getTag().equals("address_of_identifier"))
+				if((boolean)d.getAttribute("Pointer") == true && c.getChildAt(1).getTag().equals("address_of_identifier"))
 					add(c, new DebugBytecode(Kinds.vstore,0,symbol));
-				//value
-				if((boolean)d.getAttribute("Pointer") == false && !right.getTag().equals("address_of_identifier"))
+				//value and array
+				if((boolean)d.getAttribute("Pointer") == false && !c.getChildAt(1).getTag().equals("address_of_identifier"))
 				{
 					//array
 					if((int)d.getAttribute("Array Size")>0)
 					{
-						add(c, new DebugBytecode(Kinds.debugBytecodeGetArray,(int)left.getAttribute("Array Size"),symbol));
+						add(c, new DebugBytecode(Kinds.vload,(int)left.getAttribute("Array Size"),symbol));
 					}
 					else
 					{
@@ -840,7 +890,7 @@ public class Aer {
 					a.goodNodeComeBad("Unmatched Type");
 					return true;
 				}
-				add(a,new DebugBytecode(Kinds.debugBytecodeGetArray,arraysize,(String)symbol));					
+				add(a,new DebugBytecode(Kinds.vload,arraysize,(String)symbol));					
 				a.addAttribute("Data Type", "int");
 			}
 			else if(isPointer)

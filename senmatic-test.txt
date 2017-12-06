@@ -3,12 +3,8 @@ int *up = &cheer;
 
 int foo(int i, int r)
 {
-int x = 2;
-real y;
-read(x);
-i = i/(3+r)-x**up;
-//y=i;
-write("run fast for your father");
+int array[3] = {2,4,6};
+array[2] = -1;
 return 1;
 }
 
