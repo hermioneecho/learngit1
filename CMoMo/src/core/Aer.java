@@ -43,6 +43,7 @@ public class Aer {
 	
 	private static List<String> functionNames;
 	
+	
 	/**
 	 * indicate which local environment it is now
 	 * -1 if only global environment
@@ -112,9 +113,8 @@ public class Aer {
 		floats = new TreeSet<Double>();
 		functionNames = new ArrayList<String>();
 		
-		//add the main fuction
 		currentEnv = 0;
-		functionNames.add("main");
+//		functionNames.add("main");
 		
 	}
 	
@@ -344,8 +344,10 @@ public class Aer {
 		return getVariable(symbol)!=null;
 	}
 	
+	static int globalOrder = 1;
 	private String ADeclaration(ANode a)
 	{
+		
 		ANode dt = a.getChildAt(0);
 		ANode lv = a.getChildAt(1);
 		ArrayList<Object> contents = (ArrayList<Object>) lv.getContents();
@@ -362,6 +364,7 @@ public class Aer {
 			a.addAttribute("Array Size", arraysize);
 		else
 			a.addAttribute("Array Size", (int)0);
+		a.addAttribute("Global Order", globalOrder++);
 		return ID;
 	}
 	
@@ -567,6 +570,11 @@ public class Aer {
 					a.goodNodeComeBad("Unmatched Type");
 					return null;
 				}
+			}
+			else if(rightValue.getTag().equals("address_of_identifier"))
+			{
+				a.goodNodeComeBad("Unmatched Type");
+				return null;
 			}
 			
 			// assign a "left value"
@@ -954,11 +962,32 @@ public class Aer {
 			
 			//push the arguments to the stack
 			ANode al = a.getChildAt(1);
+			int argumentCount = 0;
 			Enumeration<ANode> ale = al.children();
+			ANode argument;
+			String argumentType;
+			if(al.getChildCount() != (int)d.getAttribute("Parameter Size"))
+			{
+				a.goodNodeComeBad("Unmatched Parameters Number");
+				return true;
+			}
 			while(ale.hasMoreElements())
 			{
-				AExpression(ale.nextElement());
+				AExpression((argument=ale.nextElement()));
+				argumentType=getDataType(argument);
+				if(argumentType==null)
+				{
+					argument.goodNodeComeBad("Unexisted Symbol");
+				}
+				else if(!argumentType.equals(((ArrayList<String>)d.getAttribute("Parameter Types")).get(argumentCount)))
+				{
+					argument.goodNodeComeBad("Unmatched Type");
+				}
+				argumentCount++;
 			}
+			//check argument count
+
+			
 			//then invoke
 			add(a,new DebugBytecode(Kinds.invoke,((Token)a.getChildAt(0).getContents()).getWord()));
 		}
@@ -968,7 +997,7 @@ public class Aer {
 			boolean isPointer = (boolean) contents.get(0);
 			String symbol = (String) contents.get(1);
 			int arraysize = (int) contents.get(2);
-			
+			a.setTag("right_value");
 			//check and set the type
 			ANode d = getVariable(symbol);
 			if(d==null)
