@@ -20,24 +20,25 @@ import dataStructure.SNode;
 import bytecode.Kinds;
 /**
  * @author daos
- * Aer is A-er, is ANode-er, who deal with ANode and do such A things:
- * @ ANode Tree(Attribute Tree) fulfillment
- * @ Arise semantics errors
- * @ Assembly
+ * Aer is A-er, is ANode-er, who deal with ANode and do such A things:<br>
+ * ANode Tree(Attribute Tree) fulfillment<br>
+ * Arise semantics errors<br>
+ * Assembly<br>
  */
 public class Aer {
 	
 	/**
-	 * @ global environment. 
-	 * @ environment means where the program is running on, where their methods and variables comes from.
-	 * @ more information can be saw in WangYin's famous article : How to write an interpreter 
-	 * @ To detect the re-declaration problem I use Map for convenience
+	 * global environment. 
+	 * 
+	 * environment means where the program is running on, where their methods and variables comes from.
+	 * more information can be saw in WangYin's famous article : How to write an interpreter.
+	 * To detect the re-declaration problem I use Map for convenience
 	 */
 	private static Map<String,ANode> globalEnv;
 	
 	
 	/**
-	 * local environment. local variables for each function
+	 * local environment. local variables for each function.
 	 */
 	private static List<HashMap<String/*local variable name*/, ANode/* variable's attribute*/>> localEnvs;
 	
@@ -45,7 +46,7 @@ public class Aer {
 	
 	
 	/**
-	 * indicate which local environment it is now
+	 * indicate which local environment it is now.
 	 * -1 if only global environment
 	 */
 	private static int currentEnv;
@@ -53,8 +54,8 @@ public class Aer {
 	private static Set<String> strings;
 	
 	/**
-	 * @ the name should be doubles but historically it is float that is to be put into the stack.
-	 * @ an ArrayList for the real_literal
+	 * the name should be doubles but historically it is float that is to be put into the stack.
+	 * an ArrayList for the real_literal
 	 */
 	private static Set<Double> floats;
 	
@@ -80,9 +81,11 @@ public class Aer {
 		if(currentEnv != -1)
 		{
 			result = localEnvs.get(currentEnv).get(id);
+			if(result == null)
+				result = globalEnv.get(id);
 		}
-		if(result == null)
-			result = globalEnv.get(id);
+		else
+		    result = globalEnv.get(id);
 		if(result!=null&&result.getTag().equals("Bad Node"))
 			return null;
 		return result;
@@ -121,22 +124,10 @@ public class Aer {
 	public void fillAST()
 	{
 		if(setGlobalEnv())
-			System.out.println("fill AST successfully!");
+			System.out.println("ready to fill AST!");
 		else
-		System.out.println("fail to fill AST");
+		    System.out.println("fail to fill AST");
 		
-		//show the globalEnv
-
-			String result = "GlobalEnv: \n";
-			java.util.Iterator<Entry<String, ANode>> attrI = globalEnv.entrySet().iterator();
-			Entry<String, ANode> cur = null;
-			
-			while(attrI.hasNext())
-			{
-				cur = attrI.next();
-				result+=cur.getKey()+":"+ cur.getValue().toString()+"\n";
-			}
-			System.out.println(result);
 		if(!Assembly())
 		{
 			System.out.println("Senmatic Error:");	
@@ -144,6 +135,7 @@ public class Aer {
 		}
 		else
 		{
+			System.out.println("fill AST sucessfully!");
 			out.printCodes();
 		}
 	}
@@ -162,9 +154,10 @@ public class Aer {
 	}
 	
 	/**
+	 * if the symbol exists already then do nothing
 	 * @param symbol
 	 * @param node£¬ the node is named as symbol
-	 * if the symbol exists already then do nothing
+	 * 
 	 */
 	private static boolean addToGlobal(String symbol, ANode node)
 	{
@@ -189,8 +182,9 @@ public class Aer {
 	}
 	
 	/**
+	 *  what is environment is explained in the declaration of globalEnv
 	 * @return success or not
-	 * what is environment is explained in the declaration of globalEnv
+	 *
 	 */
 	private boolean setGlobalEnv()
 	{
@@ -263,7 +257,7 @@ public class Aer {
 	
 	/**
 	 * @param id, a ANode that comes from mkid in syntaxer
-	 * @return
+	 * @return the definition node
 	 */
 	private ANode getDefinitionOfID(ANode id)
 	{
@@ -271,18 +265,19 @@ public class Aer {
 	}
 	
 	/**
+	 * use for id only
 	 * @param id, the definition of the identifier in the environment
 	 * @return
-	 * use for id only
 	 */
 	private static boolean isPointer(ANode id)
 	{
 		return (boolean)id.getAttribute("Pointer");
 	}
 	/**
+	 * use for id only
 	 * @param id
 	 * @return
-	 * use for id only
+	 * 
 	 */
 	private static boolean isArray(ANode id)
 	{
@@ -369,9 +364,11 @@ public class Aer {
 	}
 	
 	/**
+	 * tag "initialized value" to Anode a, to be used by the Loader<br>
+	 * if initialize a pointer then set the "Point To" Attribute<br>
 	 * @param a
 	 * @return name of the global defined variable only, not local one
-	 * tag "initialized value" to Anode a, to be used by the Loader
+	 * 
 	 */
 	private String ADefinition(ANode a)
 	{
@@ -642,6 +639,10 @@ public class Aer {
 	 * 6. xxx, with a stack operation, just generate it 
 	 */
 	
+	/**
+	 * generate DebugBytecode
+	 * @return generate DebugBytecode successfully or not
+	 */
 	private boolean Assembly(){
 		currentEnv = 0;
 		globalEnv.forEach((string,anode)->
@@ -660,12 +661,25 @@ public class Aer {
 				}				
 				currentEnv++;
 			}
-
-		});
-		//TODO check the main function : return int and no parameter
+		});	
+		currentEnv = 0;
+		if(!isLegalMain())
+			A.goodNodeComeBad("only and only if int main() exists, then the program is legal");
 		return ANode.illegalNode.isEmpty();
+
 	}
 	
+	private boolean isLegalMain()
+	{
+		ANode mainDefinition = getVariable("main");
+		return mainDefinition!=null && isFunction(mainDefinition)&&getDataType(mainDefinition).equals("int")&&(int)mainDefinition.getAttribute("Parameter Size")!=0;
+	}
+	
+    /**
+     * A does not mean the "Attack" in the DOTA2 or other mobi game<br>
+     * and Assembly the Node c 
+     * @param c, the statement node
+     */
     private void AStatement(ANode c)
     {
 		String symbol;
@@ -773,6 +787,12 @@ public class Aer {
 			{
 				
 				right = getVariable((String)right.getContents());
+			}
+			
+			if((boolean)left.getAttribute("Pointer")&&(boolean)d.getAttribute("Pointer"))
+			{
+				add(c, new DebugBytecode(Kinds.vload,0,symbol));
+				add(c, new DebugBytecode(Kinds.aload));
 			}
 			
 			//check type
@@ -926,6 +946,7 @@ public class Aer {
     }
 
 	/**
+	 * is a Expression Unit or not
 	 * @param a
 	 * @return isUnit
 	 */
@@ -997,6 +1018,7 @@ public class Aer {
 			boolean isPointer = (boolean) contents.get(0);
 			String symbol = (String) contents.get(1);
 			int arraysize = (int) contents.get(2);
+			
 			a.setTag("right_value");
 			//check and set the type
 			ANode d = getVariable(symbol);
@@ -1032,6 +1054,7 @@ public class Aer {
 					return true;
 				}
 				add(a,new DebugBytecode(Kinds.vload,symbol));
+				add(a, new DebugBytecode(Kinds.aload));
 			}
 			else if(arraysize==0 && isPointer==false)
 			{
@@ -1231,19 +1254,6 @@ public class Aer {
 		return null;
 	}
 	
-	/**
-	 * @param symbol
-	 * @param attribute
-	 * use to change the variable in the environment's attribute, maybe useless
-	 */
-	private void setAttribute(String symbol, String attribute, Object value)
-	{
-		ANode a =  getVariable(symbol);
-		if(a != null)
-		{
-			a.addAttribute(attribute, value);
-		}
-	}
 	
 	private String ALeftValue(ANode a)
 	{

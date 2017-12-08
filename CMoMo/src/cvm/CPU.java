@@ -376,7 +376,7 @@ public class CPU {
 		});
 		FunctionalCircuits.set(Kinds.aload.ordinal(), (op)->
 		{
-			stackArea.push(stackArea.getValue(op));
+			stackArea.push(stackArea.getValue((int)stackArea.pop()));
 			pc++;
 		});
 		FunctionalCircuits.set(Kinds.astore.ordinal(), (op)->
