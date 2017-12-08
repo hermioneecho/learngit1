@@ -16,5 +16,12 @@ int main()
 return 1;
 }
 
+real allo(int c, int b ,int a)
+{
+real x;
+real y;
+real m;
+return 1.1;
+}
 
 

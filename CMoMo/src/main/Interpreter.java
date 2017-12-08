@@ -16,6 +16,7 @@ public class Interpreter extends Info{
 	static private Lexer lexer;
 	static private Syntaxer syntaxer;
 	static private Aer aer;
+	static private Loader loader;
 	
 
 	public static void main ( String args [ ] ) {
@@ -72,13 +73,13 @@ public class Interpreter extends Info{
 				result.setVisible(true);
 				result.show(syntaxer.getRoot());
 
-					aer = new Aer(syntaxer.getRoot());
-					aer.fillAST();
-					TestDemo testDemo = new TestDemo(aer.getRoot());
-					testDemo.show(aer.getRoot());
-					
-//					Demo result = new Demo(syntaxer.getRoot());
-//					result.show(syntaxer.getRoot());
+				aer = new Aer(syntaxer.getRoot());
+				aer.fillAST();
+				TestDemo testDemo = new TestDemo(aer.getRoot());
+				testDemo.show(aer.getRoot());
+				
+				loader = new Loader(aer);
+
 
 				}
 				else

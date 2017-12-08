@@ -112,7 +112,7 @@ public class Aer {
 	public Aer(SNode S) {
 		super();
 		A = ANode.convert(S);
-		out = new DebugInfo(this);
+		setOut(new DebugInfo(this));
 		globalEnv = new HashMap<String,ANode>();
 		localEnvs = new ArrayList<HashMap<String,ANode>>();
 		strings = new TreeSet<String>();
@@ -246,7 +246,7 @@ public class Aer {
 		else
 		{
 			System.out.println("fill AST sucessfully!");
-			out.printCodes();
+			getOut().printCodes();
 		}
 	}
 	
@@ -779,29 +779,23 @@ public class Aer {
 	 */
 	private boolean Assembly(){
 		currentEnv = 0;
-		globalEnv.forEach((string,anode)->
+		ANode c;
+		for(ANode f : functions)
 		{
-			if(anode.getTag().equals("function_definition"))
+			Enumeration<ANode> e = f.children();			
+			while(e.hasMoreElements())
 			{
-				//the parameter is added to LocalEnv in AFunction definition
-				//the function name is added in SetGlobal
-				Enumeration<ANode> e = anode.children();
-				ANode c;
-
-				while(e.hasMoreElements())
-				{
-					c=e.nextElement();
-					AStatement(c);
-				}				
-				currentEnv++;
+				c=e.nextElement();
+				AStatement(c);
 			}
-		});	
+			currentEnv++;
+		}
 		currentEnv = 0;
 		if(!isLegalMain())
 			A.goodNodeComeBad("only and only if int main() exists, then the program is legal");
 		return ANode.illegalNode.isEmpty();
-
 	}
+	
 	
 	private boolean isLegalMain()
 	{
@@ -1023,8 +1017,8 @@ public class Aer {
 			{
 				AStatement((ANode)e.nextElement());
 			}
-			int count = out.countCodes(body);
-			int whileCount = out.countCodes(c);
+			int count = getOut().countCodes(body);
+			int whileCount = getOut().countCodes(c);
 			add(lastNode, new DebugBytecode(Kinds.gto,0-whileCount));
 			condDBC.setAddress(count+2);
 		}
@@ -1042,7 +1036,7 @@ public class Aer {
 			{
 				AStatement((ANode)e.nextElement());
 			}
-			int count = out.countCodes(body);
+			int count = getOut().countCodes(body);
 			condDBC.setAddress(count+1);
 		}
 		else if(c.getTag().equals("if_else_node"))
@@ -1061,7 +1055,7 @@ public class Aer {
 			{
 				AStatement((ANode)e.nextElement());
 			}
-			int count = out.countCodes(ifbody);
+			int count = getOut().countCodes(ifbody);
 			add(lastNode,ifgoto);
 			condDBC.setAddress(count+2);
 			Enumeration e2 = elsebody.children();
@@ -1069,7 +1063,7 @@ public class Aer {
 			{
 				AStatement((ANode)e2.nextElement());
 			}
-			count = out.countCodes(elsebody);
+			count = getOut().countCodes(elsebody);
 			ifgoto.setAddress(count+1);
 		}
 		else
@@ -1373,8 +1367,8 @@ public class Aer {
 	 */
 	private void add(ANode a,DebugBytecode dbc)
 	{
-		out.pushCode(a.getLineNo(), dbc);
-		out.setCodeCount(a);
+		getOut().pushCode(a.getLineNo(), dbc);
+		getOut().setCodeCount(a);
 		lastNode = a;
 	}
 	
@@ -1469,6 +1463,14 @@ public class Aer {
 	public int getLocalVariableCount(int envIndex)
 	{
 	    return localEnvs.get(envIndex).size();
+	}
+
+	DebugInfo getOut() {
+		return out;
+	}
+
+	private void setOut(DebugInfo out) {
+		this.out = out;
 	}
 	
 }

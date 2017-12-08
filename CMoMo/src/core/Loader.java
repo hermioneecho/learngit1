@@ -11,6 +11,7 @@ import bytecode.Bytecode;
 import bytecode.DebugBytecode;
 import bytecode.Kinds;
 import cvm.DebugInfo;
+import cvm.FunctionInfo;
 import cvm.MethodArea;
 import cvm.Pool;
 import cvm.StackArea;
@@ -34,6 +35,8 @@ public class Loader {
 	 * */
 	
 	private Pool pool;
+	private FunctionInfo[] finfo;
+	static int pc;
 	
 	private Aer aer;
 	
@@ -45,7 +48,7 @@ public class Loader {
 	
 	private StackArea stackArea;
 	
-	private List<ArrayList<String>> functionEnvs;
+	private List<String[]> functionEnvs;
 	private static int whichLocalEnv;
 	
 	private void loadFunctionEnvs()
@@ -53,19 +56,29 @@ public class Loader {
 		whichLocalEnv = 0;
 		for(HashMap<String,ANode> e : aer.getLocalEnvs())
 		{
-			// 1. add all the parameter to the arrayList as order
-			functionEnvs.add(new ArrayList<String>());
+			// 1. add all the parameter to the arrayList in order
+			int locals = aer.getLocalVariableCount(whichLocalEnv);
+			ArrayList<String> tmp = new ArrayList<String>();
+			functionEnvs.add(new String[locals]);
 			e.forEach((s,a)->{
 				if(a.getAttribute("Parameter Index")!=null)
-					functionEnvs.get(whichLocalEnv).add((int)a.getAttribute("Parameter Index"),(String) a.getAttribute("Symbol"));
+					functionEnvs.get(whichLocalEnv)[(int)a.getAttribute("Parameter Index")-1]=(String) a.getAttribute("Symbol");
 			});
 			// 2. add the local variable above the parameters
 			e.forEach((s,a)->{
 				if(a.getAttribute("Parameter Index")==null)
-					functionEnvs.get(whichLocalEnv).add((String) a.getAttribute("Symbol"));
-			});			
+					{
+		     			tmp.add((String)a.getAttribute("Symbol"));
+					}
+			});
+			ANode d = aer.functions.get(whichLocalEnv);
+			int params = (int)d.getAttribute("Parameter Size");
+			for(int i=0; i< tmp.size(); i++)
+			{
+				functionEnvs.get(whichLocalEnv)[params+i] = tmp.get(i);
+			}
+			finfo[whichLocalEnv] = new FunctionInfo(locals,0,(int)d.getAttribute("End Line"),params);
 			whichLocalEnv++;
-			//TODO: make a functionInfo
 		}
 	}
 	
@@ -74,13 +87,14 @@ public class Loader {
 	 */
 	private ArrayList<DebugBytecode> debugCodes;
 	
-	public Loader(Pool pool, Aer aer, DebugInfo debugInfo, MethodArea methodArea) {
+	public Loader(Aer aer) {
 		super();
-		this.pool=pool;
 		this.aer=aer;
-		this.debugInfo=debugInfo;
-		this.methodArea=methodArea;
-		functionEnvs = new ArrayList<ArrayList<String>>();
+		this.debugInfo=aer.getOut();
+		functionEnvs = new ArrayList<String[]>();
+		finfo = new FunctionInfo[aer.functions.size()];
+		loadFunctionEnvs();
+		System.out.println("..");
 		
 	}
 	
@@ -88,6 +102,7 @@ public class Loader {
 	 * convert DebugByteCode to ByteCode
 	 */
 	public void convertDebugByteCode() {
+		
 		debugInfo.debugCodes.forEach((lineNum,codes)-> {
 			for(DebugBytecode debugCode : codes) {
 				switch(debugCode.getKind()) {
