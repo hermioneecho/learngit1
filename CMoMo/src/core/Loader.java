@@ -65,6 +65,7 @@ public class Loader {
 					functionEnvs.get(whichLocalEnv).add((String) a.getAttribute("Symbol"));
 			});			
 			whichLocalEnv++;
+			//TODO: make a functionInfo
 		}
 	}
 	
@@ -87,32 +88,34 @@ public class Loader {
 	 * convert DebugByteCode to ByteCode
 	 */
 	public void convertDebugByteCode() {
-		debugCodes=debugInfo.getDebugByteCode();
-		for(DebugBytecode debugCode:debugCodes) {
-			switch(debugCode.getKind()) {
-			case vload:
-				vload(debugCode.getSymbol());
-				break;
-			case vstore:
-				vstore(debugCode.getSymbol());
-				break;
-			case astore:
-				astore(debugCode.getSymbol());
-				break;
-			case fpush:
-				fpush(debugCode.getSymbol());
-				break;
-			case debugBytecodePushString:
-				debugBytecodePushString(debugCode.getSymbol());
-				break;
-			case debugBytecodeGetAddress:
-				debugBytecodeGetAddress(debugCode.getSymbol());
-				break;
-			case invoke:
-				invoke(debugCode.getSymbol());
-				break;
+		debugInfo.debugCodes.forEach((lineNum,codes)-> {
+			for(DebugBytecode debugCode : codes) {
+				switch(debugCode.getKind()) {
+				case vload:
+					vload(debugCode.getSymbol());
+					break;
+				case vstore:
+					vstore(debugCode.getSymbol());
+					break;
+				case astore:
+					astore(debugCode.getSymbol());
+					break;
+				case fpush:
+					fpush(debugCode.getSymbol());
+					break;
+				case debugBytecodePushString:
+					debugBytecodePushString(debugCode.getSymbol());
+					break;
+				case debugBytecodeGetAddress:
+					debugBytecodeGetAddress(debugCode.getSymbol());
+					break;
+				case invoke:
+					invoke(debugCode.getSymbol());
+					break;
+				}
 			}
 		}
+		);
 	}
 	
 	public Bytecode vload (String symbol) {
@@ -136,6 +139,9 @@ public class Loader {
 		// TODO Auto-generated method stub
 		// 1. figure out which enviromnet the symbol lives in
 		// 2. get it index in its environment
+		
+		
+		
 		return 0;
 	}
 

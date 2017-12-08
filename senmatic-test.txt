@@ -7,7 +7,13 @@ real foo(int i, real r, int j)
 {
 i = *a;
 *a = 2+array[2];
+real l;
 return 3.0;
+}
+
+int main()
+{
+return 1;
 }
 
 

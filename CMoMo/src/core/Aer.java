@@ -37,6 +37,8 @@ public class Aer {
 	 */
 	private static Map<String,ANode> globalEnv;
 	
+	public static List<ANode> functions;
+	
 	
 	/**
 	 * local environment. local variables for each function.
@@ -116,6 +118,7 @@ public class Aer {
 		strings = new TreeSet<String>();
 		floats = new TreeSet<Double>();
 		functionNames = new ArrayList<String>();
+		functions = new ArrayList<ANode>();
 		
 		currentEnv = 0;
 //		functionNames.add("main");
@@ -222,6 +225,19 @@ public class Aer {
 		else
 		    System.out.println("fail to fill AST");
 		
+		//show the globalEnv
+
+		String result = "GlobalEnv: \n";
+		java.util.Iterator<Entry<String, ANode>> attrI = globalEnv.entrySet().iterator();
+		Entry<String, ANode> cur = null;
+		
+		while(attrI.hasNext())
+		{
+			cur = attrI.next();
+			result+=cur.getKey()+":"+ cur.getValue().toString()+"\n";
+		}
+		System.out.println(result);
+		
 		if(!Assembly())
 		{
 			System.out.println("Senmatic Error:");	
@@ -264,16 +280,18 @@ public class Aer {
 		return false;
 	}
 	
-	private static boolean addToLocal(String symbol,ANode node)
+	private boolean addToLocal(String symbol,ANode node)
 	{
 		if(!localEnvs.get(currentEnv).containsKey(symbol))
 		{
 			localEnvs.get(currentEnv).put(symbol, node);
+			ANode d = getVariable(functionNames.get(currentEnv));
 			return true;
 		}
 		node.goodNodeComeBad("the symbol(identifier) already exist!");
 		return false;
 	}
+	
 	
 	/**
 	 *  what is environment is explained in the declaration of globalEnv
@@ -399,10 +417,13 @@ public class Aer {
 	private String AFunctionDeclaration(ANode a)
 	{
 		localEnvs.add(new HashMap<String,ANode>());
+
 		
 		ANode dt = a.getChildAt(0);
 		ANode id = a.getChildAt(1);
 		ANode pl = a.getChildAt(2);
+		
+		functionNames.add(getSymbolFromMkid(id));
 		
 		a.addAttribute("Data Type",(String)dt.getContents());
 		a.addAttribute("Symbol", getSymbolFromMkid(id));
@@ -435,11 +456,14 @@ public class Aer {
 		a.addAttribute("Parameter Types", prTypes);
 		a.addAttribute("Parameter Symbols", prSymbols);
 		
+		
 		int beginLine = dt.getLineNo();
 		int endLine = ((ANode)a.getLastChild()).getLineNo();
 		
 		a.addAttribute("Begin Line", beginLine);
 		a.addAttribute("End Line", endLine);
+		
+		functions.add(a);
 		
 		return getSymbolFromMkid(id);
 	}
@@ -782,7 +806,7 @@ public class Aer {
 	private boolean isLegalMain()
 	{
 		ANode mainDefinition = getVariable("main");
-		return mainDefinition!=null && isFunction(mainDefinition)&&getDataType(mainDefinition).equals("int")&&(int)mainDefinition.getAttribute("Parameter Size")!=0;
+		return mainDefinition!=null && isFunction(mainDefinition)&&getDataType(mainDefinition).equals("int")&&(int)mainDefinition.getAttribute("Parameter Size")==0;
 	}
 	
     /**
@@ -1430,5 +1454,21 @@ public class Aer {
 		return symbol;
 	}
 	
+	public int getLocalVariableCount(String symbol)
+	{
+		int envIndex = 0;
+		for(String s : functionNames)
+		{
+			if(symbol.equals(s))
+				return localEnvs.get(envIndex).size();
+			envIndex++;
+		}
+		return -1;
+	}
+	
+	public int getLocalVariableCount(int envIndex)
+	{
+	    return localEnvs.get(envIndex).size();
+	}
 	
 }

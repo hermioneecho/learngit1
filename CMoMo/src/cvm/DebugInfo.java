@@ -5,6 +5,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import bytecode.Bytecode;
 import bytecode.DebugBytecode;
@@ -40,17 +41,10 @@ public class DebugInfo{
 	 * 10. if debug, the keeps the breakpoint location in the source file and run in CVM DebugMode 
 	 * */
 	
-	private Map<Integer/*the line number*/, ArrayList<DebugBytecode>> debugCodes;
+	public Map<Integer/*the line number*/, ArrayList<DebugBytecode>> debugCodes;
 	private Map<ANode,Integer> codeNum;
 	private ArrayList<DebugBytecode> debugBytecodes;
 	
-	/**
-	 * the index is function index, and beginLine.get(index) return the line 
-	 * where the function begins(the first line inside the body)
-	 */
-	private List<Integer> beginLine;
-	
-	private List<Integer> endLine;
 	
 	/**
 	 * contains all the information generate during the global setting and assembling
@@ -61,9 +55,9 @@ public class DebugInfo{
 		super();
 		this.aer = aer;
 		debugCodes = new HashMap<Integer, ArrayList<DebugBytecode>>();
-		beginLine = new ArrayList<Integer>();
-		endLine = new ArrayList<Integer>();
 		codeNum = new HashMap<ANode, Integer>();
+
+
 	}
 	
 	public ArrayList<DebugBytecode> getCodes(int lineNo)
@@ -99,6 +93,7 @@ public class DebugInfo{
 	{
 		getCodes(lineNo).add(dbc);
 	}
+	
 	
 	public void setOp(int lineNo, int dbcNo, int newOp)
 	{
@@ -145,6 +140,10 @@ public class DebugInfo{
 		return debugBytecodes;
 	}
 	
+	public int getFunctionIndex(int lineNum)
+	{
+		return 0;
+	}
 	
 
 	
