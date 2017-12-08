@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import dataStructure.Token;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -119,6 +120,82 @@ public class Aer {
 		currentEnv = 0;
 //		functionNames.add("main");
 		
+	}
+	
+	/**
+	 * @param symbol
+	 * @return
+	 *Get the relative position of a local variable by traversing
+	 */
+	public int getLocalVarIndex(String symbol) {
+		int index=0;
+		for(int i=0;i<localEnvs.size();i++) {
+			Set<String> setKey=localEnvs.get(i).keySet();
+			Iterator<String> iterator=setKey.iterator();
+			//use the while loop to read the key value
+			while(iterator.hasNext()){
+				if(symbol==iterator.next()) {
+					index=iterator.hashCode();
+				}	
+			};
+		}
+		return index;
+	}
+	
+	/**
+	 * @param symbol
+	 * @return
+	 * Get the relative position of a global variable by traversing
+	 */
+	public int getGlobalVarIndex(String symbol) {
+		int index=0;
+		Iterator<String> iterator=globalEnv.keySet().iterator();
+		while(iterator.hasNext()) {
+			if(symbol==iterator.next()) {
+				index=iterator.hashCode();
+			}
+		}
+		return index;
+	}
+	
+	/**
+	 * @param symbol
+	 * @return
+	 * get each float index in array floats by traversing
+	 */
+	public int getFloatIndex(String symbol) {
+		int index=0;
+		for(Double value:floats) {
+			if(symbol==value.toString()) {
+				index=value.hashCode();
+			}
+		}
+		return index;
+	}
+	
+	public int getFunctionIndex(String symbol) {
+		int index=0;
+		for(int i=0;i<functionNames.size();i++) {
+			if(symbol==functionNames.get(i)) {
+				index=i;
+			}
+		}
+		return index;
+	}
+	
+	/**
+	 * @param symbol
+	 * @return
+	 * get each string index in array strings by traversing
+	 */
+	public int getStringIndex(String symbol) {
+		int index=0;
+		for(String value:strings) {
+			if(symbol==value) {
+				index=value.hashCode();
+			}
+		}
+		return index;
 	}
 	
 	public void fillAST()
@@ -286,6 +363,20 @@ public class Aer {
 	private static boolean isFunction(ANode id)
 	{
 		return id.getTag().equals("function_definition");
+	}
+	
+	public boolean isLocalVariable(String symbol) {
+		for(int i=0;i<localEnvs.size();i++) {
+			Set<String> setKey=localEnvs.get(i).keySet();
+			Iterator<String> iterator=setKey.iterator();
+			//use the while loop to read the key value
+			while(iterator.hasNext()){
+				if(symbol==iterator.next()) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	private String AFunctionDeclaration(ANode a)

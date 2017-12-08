@@ -1,6 +1,7 @@
 package cvm;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class Pool {
 	private String[] strings;
@@ -59,6 +60,10 @@ public class Pool {
 	public Object getGlobalVariable(int index)
 	{
 		return globalVariables[index];
+	}
+	
+	public Object[] getGlobalVariables() {
+		return globalVariables;
 	}
 	
 	public void setGlobalVariable(int index, Object o)
