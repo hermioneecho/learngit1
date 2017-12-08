@@ -65,5 +65,20 @@ public class Pool {
 	{
 		globalVariables[index] = o;
 	}
+	
+	public void printPool()
+	{
+		System.out.println("Pool:");
+		int j = 1;
+		for(int i = 0; i<strings.length; i++)
+			System.out.println("    #"+(i+(j++)+" "+strings[i]));
+		for(int i = 0; i<floats.length; i++)
+			System.out.println("    #"+(i+(j++)+" "+floats[i]));
+		for(int i = 0; i<globalVariables.length; i++)
+			System.out.println("    #"+(i+(j++)+" "+globalVariables[i]));
+		for(int i = 0; i<methods.length; i++)
+			System.out.println("    #"+(i+(j++)+" "+methods[i].toString()));
+		System.out.println();
+	}
 
 }

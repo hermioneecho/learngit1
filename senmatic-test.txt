@@ -1,11 +1,13 @@
-int cheer;
-int *up = &cheer;
-
-int foo(int i, int r)
+int i;
+int r = 1;
+int *a = &i;
+int b = *a;
+real foo(int i, real r, int j)
 {
-int array[3] = {2,4,6};
-array[2] = -1;
-return 1;
+i = *a;
+r = foo(1, 2.0 + 1.0, i);
+return 3.0;
 }
+
 
 

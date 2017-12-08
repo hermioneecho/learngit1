@@ -5,6 +5,12 @@ package cvm;
  */
 public class FunctionInfo {
 	
+	@Override
+	public String toString() {
+		return "FunctionInfo [variableCount=" + variableCount + ", pc=" + pc + ", line=" + line + ", paramCount="
+				+ paramCount + "]";
+	}
+
 	/**
 	 * the number of variables
 	 */

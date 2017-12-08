@@ -118,7 +118,7 @@ public class DebugInfo{
 		while(children.hasMoreElements())
 		{
 			c=(ANode) children.nextElement();
-			count += getCodeCount(c);
+			count += countCodes(c);
 		}
 		return count;
 	}
@@ -129,7 +129,7 @@ public class DebugInfo{
 		debugCodes.forEach(
 				(i,cs)->{
 					System.out.println("at line "+ i +" : ");
-					cs.forEach((c)->{System.out.println(c.toString());});
+					cs.forEach((c)->{System.out.println("  "+c.toString());});
 				}
 				);
 	}

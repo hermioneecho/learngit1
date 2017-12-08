@@ -101,7 +101,7 @@ public class Syntaxer extends Info{
 		    {
 		    	continue;
 		    }
-		    System.out.println("Syntax Error may be at line " + stxr.getErrorLine() + ", the word \""+stxr.getErrorToken().getWord()+"\"");
+		    System.out.println("Syntax Error may be at line " + stxr.getErrorLine() + ", maybe near the word \""+stxr.getErrorToken().getWord()+"\"");
 		    return null;
 		}
 		
@@ -207,11 +207,11 @@ public class Syntaxer extends Info{
 	private SNode WhileStatement() {
 		// TODO Auto-generated method stub		
 		int save = stxr.getCur();
-		int line = stxr.getLine();
+		int line;
 		SNode cond = null;
 		SNode body = null;
 		SNode result = null;
-		if(isWord("while") && (cond=Cond())!=null && (body=Body())!=null)
+		if(isWord("while") && (cond=Cond())!=null &&(line = stxr.getLine())!=0 && (body=Body())!=null)
 		{
 			// syntax direct
 			result = new SNode("while_node",null,line);
@@ -353,9 +353,9 @@ public class Syntaxer extends Info{
 		SNode ifbody = null;
 		SNode elsebody = null;
 		
-		int line = stxr.getLine();
+		int line;
 		
-		if(isWord("if") && (cond=Cond())!=null && (ifbody=Body())!=null)
+		if(isWord("if") &&(line = stxr.getLine())!=0 && (cond=Cond())!=null&& (ifbody=Body())!=null)
 		{
 			if(isWord("else") && (elsebody=Body())!=null)
 			{
@@ -454,7 +454,7 @@ public class Syntaxer extends Info{
 		SNode result = null;
 		if((leftvalue = LeftValue())!=null && isWord("=") && (rightValue=RightValue())!=null)
 		{
-			result = new SNode("assigment",null,stxr.getLine());
+			result = new SNode("assignment",null,stxr.getLine());
 			result.add(leftvalue);
 			result.add(rightValue);
 			return result;
