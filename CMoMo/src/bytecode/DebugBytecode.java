@@ -30,7 +30,9 @@ public class DebugBytecode /*extends Bytecode*/{
 		this.symbol = symbol;
 	}
 	
-	
+	public Kinds getKind() {
+		return bytecode.getKind();
+	}
 	
 	@Override
 	public String toString() {

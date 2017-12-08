@@ -42,6 +42,7 @@ public class DebugInfo{
 	
 	private Map<Integer/*the line number*/, ArrayList<DebugBytecode>> debugCodes;
 	private Map<ANode,Integer> codeNum;
+	private ArrayList<DebugBytecode> debugBytecodes;
 	
 	/**
 	 * the index is function index, and beginLine.get(index) return the line 
@@ -134,7 +135,15 @@ public class DebugInfo{
 				);
 	}
 
-	
+	public ArrayList<DebugBytecode> getDebugByteCode() {
+		debugCodes.forEach(
+				(i,cs)->{
+					cs.forEach((c)->{debugBytecodes.add(c);});
+				}
+				);
+		
+		return debugBytecodes;
+	}
 	
 	
 

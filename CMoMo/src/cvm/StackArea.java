@@ -38,6 +38,10 @@ public class StackArea {
 		sp = 1;
 	}
 	
+	public ArrayList<Object> getStack(){
+		return stack;
+	}
+	
 	public Object getValue(int address)
 	{
 		if(address>=sp)
