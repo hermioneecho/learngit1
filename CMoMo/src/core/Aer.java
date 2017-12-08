@@ -122,82 +122,99 @@ public class Aer {
 		
 	}
 	
-	/**
-	 * @param symbol
-	 * @return
-	 *Get the relative position of a local variable by traversing
-	 */
-	public int getLocalVarIndex(String symbol) {
-		int index=0;
-		for(int i=0;i<localEnvs.size();i++) {
-			Set<String> setKey=localEnvs.get(i).keySet();
-			Iterator<String> iterator=setKey.iterator();
-			//use the while loop to read the key value
-			while(iterator.hasNext()){
-				if(symbol==iterator.next()) {
-					index=iterator.hashCode();
-				}	
-			};
-		}
-		return index;
-	}
+// it is bad to add code in Aer.java rather than Loader.java	
+// your errors is pointed out inside getLocalVarIndex
+//	
+//	/**
+//	 * @param symbol
+//	 * @return
+//	 *Get the relative position of a local variable by traversing
+//	 */
+//	public int getLocalVarIndex(String symbol) {
+//		int index=0;
+//		
+//		/*
+//		 * Error£º
+//		 * 1. you may fetch a local variable in another function's local enviroment
+//		 * 2. hashcode return a random number that is used for overriding equals
+//		 * 3. low efficiency
+//		 */
+//		
+////		for(int i=0;i<localEnvs.size();i++) {
+////			Set<String> setKey=localEnvs.get(i).keySet();
+////			Iterator<String> iterator=setKey.iterator();
+////			//use the while loop to read the key value
+////			while(iterator.hasNext()){
+////				if(symbol==iterator.next()) {
+////					index=iterator.hashCode();
+////				}	
+////			};
+////		}
+//		return index;
+//		
+//
+//	}
+//	
+//	/**
+//	 * @param symbol
+//	 * @return
+//	 * Get the relative position of a global variable by traversing
+//	 */
+//	public int getGlobalVarIndex(String symbol) {
+//		int index=0;
+//		Iterator<String> iterator=globalEnv.keySet().iterator();
+//		while(iterator.hasNext()) {
+//			if(symbol==iterator.next()) {
+//				index=iterator.hashCode();
+//			}
+//		}
+//		return index;
+//	}
+//	
+//	/**
+//	 * @param symbol
+//	 * @return
+//	 * get each float index in array floats by traversing
+//	 */
+//	public int getFloatIndex(String symbol) {
+//		int index=0;
+//		for(Double value:floats) {
+//			if(symbol==value.toString()) {
+//				index=value.hashCode();
+//			}
+//		}
+//		return index;
+//	}
+//	
+//	public int getFunctionIndex(String symbol) {
+//		int index=0;
+//		for(int i=0;i<functionNames.size();i++) {
+//			if(symbol==functionNames.get(i)) {
+//				index=i;
+//			}
+//		}
+//		return index;
+//	}
+//	
+//	/**
+//	 * @param symbol
+//	 * @return
+//	 * get each string index in array strings by traversing
+//	 */
+//	public int getStringIndex(String symbol) {
+//		int index=0;
+//		for(String value:strings) {
+//			if(symbol==value) {
+//				index=value.hashCode();
+//			}
+//		}
+//		return index;
+//	}
 	
-	/**
-	 * @param symbol
-	 * @return
-	 * Get the relative position of a global variable by traversing
-	 */
-	public int getGlobalVarIndex(String symbol) {
-		int index=0;
-		Iterator<String> iterator=globalEnv.keySet().iterator();
-		while(iterator.hasNext()) {
-			if(symbol==iterator.next()) {
-				index=iterator.hashCode();
-			}
-		}
-		return index;
+	public List<HashMap<String, ANode>> getLocalEnvs() {
+		return localEnvs;
 	}
-	
-	/**
-	 * @param symbol
-	 * @return
-	 * get each float index in array floats by traversing
-	 */
-	public int getFloatIndex(String symbol) {
-		int index=0;
-		for(Double value:floats) {
-			if(symbol==value.toString()) {
-				index=value.hashCode();
-			}
-		}
-		return index;
-	}
-	
-	public int getFunctionIndex(String symbol) {
-		int index=0;
-		for(int i=0;i<functionNames.size();i++) {
-			if(symbol==functionNames.get(i)) {
-				index=i;
-			}
-		}
-		return index;
-	}
-	
-	/**
-	 * @param symbol
-	 * @return
-	 * get each string index in array strings by traversing
-	 */
-	public int getStringIndex(String symbol) {
-		int index=0;
-		for(String value:strings) {
-			if(symbol==value) {
-				index=value.hashCode();
-			}
-		}
-		return index;
-	}
-	
+
 	public void fillAST()
 	{
 		if(setGlobalEnv())
@@ -398,6 +415,7 @@ public class Aer {
 		String prID = null;
 		List<String> prSymbols = new ArrayList<String>();
 		List<String> prTypes = new ArrayList<String>(); 
+		int pindex = 1;
 		while(prms.hasMoreElements())
 		{
 			pr = prms.nextElement();
@@ -409,6 +427,7 @@ public class Aer {
 			pr.addAttribute("Symbol", prID);
 			pr.addAttribute("Pointer", false);
 			pr.addAttribute("Array Size", 0);
+			pr.addAttribute("Parameter Index", pindex++);
 			if(!addToLocal(prID,pr))
 				;//seems no need to handle here because it would be unexisted node if we use the parameter
 			

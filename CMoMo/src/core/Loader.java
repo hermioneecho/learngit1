@@ -1,6 +1,11 @@
 package core;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
+
+import javax.swing.text.html.HTMLDocument.Iterator;
 
 import bytecode.Bytecode;
 import bytecode.DebugBytecode;
@@ -9,6 +14,7 @@ import cvm.DebugInfo;
 import cvm.MethodArea;
 import cvm.Pool;
 import cvm.StackArea;
+import dataStructure.ANode;
 
 public class Loader {
 	
@@ -39,6 +45,29 @@ public class Loader {
 	
 	private StackArea stackArea;
 	
+	private List<ArrayList<String>> functionEnvs;
+	private static int whichLocalEnv;
+	
+	private void loadFunctionEnvs()
+	{
+		whichLocalEnv = 0;
+		for(HashMap<String,ANode> e : aer.getLocalEnvs())
+		{
+			// 1. add all the parameter to the arrayList as order
+			functionEnvs.add(new ArrayList<String>());
+			e.forEach((s,a)->{
+				if(a.getAttribute("Parameter Index")!=null)
+					functionEnvs.get(whichLocalEnv).add((int)a.getAttribute("Parameter Index"),(String) a.getAttribute("Symbol"));
+			});
+			// 2. add the local variable above the parameters
+			e.forEach((s,a)->{
+				if(a.getAttribute("Parameter Index")==null)
+					functionEnvs.get(whichLocalEnv).add((String) a.getAttribute("Symbol"));
+			});			
+			whichLocalEnv++;
+		}
+	}
+	
 	/**
 	 * get all debugByteCodes
 	 */
@@ -50,6 +79,8 @@ public class Loader {
 		this.aer=aer;
 		this.debugInfo=debugInfo;
 		this.methodArea=methodArea;
+		functionEnvs = new ArrayList<ArrayList<String>>();
+		
 	}
 	
 	/**
@@ -86,25 +117,40 @@ public class Loader {
 	
 	public Bytecode vload (String symbol) {
 		int op=0;
+		
+		// before we judge if the variable is local or not
+		// we need to know which environment this variable lives in 
+		
 		//is a local variable?
 		if(aer.isLocalVariable(symbol)) {
-			op=aer.getLocalVarIndex(symbol);
+			op=getLocalVarIndex(symbol);
 			bytecode=new Bytecode(Kinds.vload,op);
 		}else{
-			op=-(aer.getGlobalVarIndex(symbol));
+			op=-(getGlobalVarIndex(symbol));
 			bytecode=new Bytecode(Kinds.vload,0-op);
 		}
 		return bytecode;
 	}
 	
+	private int getLocalVarIndex(String symbol) {
+		// TODO Auto-generated method stub
+		// 1. figure out which enviromnet the symbol lives in
+		// 2. get it index in its environment
+		return 0;
+	}
+
 	public Bytecode vstore(String symbol) {
 		int op=0;
+		
+		// before we judge if the variable is local or not
+		// we need to know which environment this variable lives in 
+		
 		//is a local variable?
 		if(aer.isLocalVariable(symbol)) {
-			op=aer.getLocalVarIndex(symbol);
+			op=getLocalVarIndex(symbol);
 			bytecode=new Bytecode(Kinds.vstore,op);
 		}else{
-			op=-(aer.getGlobalVarIndex(symbol));
+			op=-(getGlobalVarIndex(symbol));
 			bytecode=new Bytecode(Kinds.vstore,0-op);
 		}
 		return bytecode;
